@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="icon.svg" alt="Hello World Logo" width="21%">
+  <img src="icon.png" alt="Mattermost Logo" width="21%">
 </p>
 
-# Hello World on StartOS
+# Mattermost on StartOS
 
-> **Upstream repo:** <https://github.com/Start9Labs/hello-world>
+> **Upstream docs:** <https://docs.mattermost.com/>
+>
+> Everything not listed in this document should behave the same as upstream
+> Mattermost. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable.
 
-A minimal reference service for StartOS. It displays a simple web page — nothing more. Use [this repository](https://github.com/Start9Labs/hello-world-startos) as a template when packaging a new service for StartOS.
-
-## Getting Started
-
-To learn how to use this template to create your own StartOS service package, see the [Packaging Guide](https://docs.start9.com/packaging).
+[Mattermost](https://github.com/mattermost/mattermost) is a self-hosted, open source messaging and collaboration platform — a Slack-style chat workspace for teams. This package wraps the upstream `mattermost-team-edition` container image and ships it as a single-click install on StartOS, alongside a co-located PostgreSQL sidecar.
 
 ---
 
@@ -34,39 +34,64 @@ To learn how to use this template to create your own StartOS service package, se
 
 ## Image and Container Runtime
 
-| Property      | Value                                  |
-| ------------- | -------------------------------------- |
-| Image         | `ghcr.io/start9labs/hello-world`       |
-| Architectures | x86_64, aarch64, riscv64               |
-| Command       | `hello-world`                          |
+| Property      | Value                                                            |
+| ------------- | ---------------------------------------------------------------- |
+| Mattermost    | `mattermost/mattermost-team-edition` (upstream, unmodified)      |
+| Database      | `postgres:16-alpine` (upstream, unmodified)                      |
+| Architectures | x86_64 (upstream `mattermost-team-edition` does not publish arm64) |
+| Entrypoint    | Image default (`/mattermost/bin/mattermost`); PostgreSQL bound to `127.0.0.1` |
+| Run as        | UID/GID `2000:2000` (the image's `mattermost` user)              |
+
+A short `chown` oneshot runs before PostgreSQL on every start to (re)create the `data`, `config`, `logs`, `plugins` and `client-plugins` subdirectories of the `mattermost` volume and align ownership to `2000:2000`, since the Mattermost image is distroless and cannot perform that itself.
 
 ---
 
 ## Volume and Data Layout
 
-| Volume | Mount Point | Purpose         |
-| ------ | ----------- | --------------- |
-| `main` | `/data`     | Persistent data |
+| Volume       | Subpath          | Mount point                  | Purpose                                              |
+| ------------ | ---------------- | ---------------------------- | ---------------------------------------------------- |
+| `main`       | `store.json`     | (host file)                  | StartOS package state — currently the Postgres password |
+| `mattermost` | `data`           | `/mattermost/data`           | File uploads, search indexes, attachments            |
+| `mattermost` | `config`         | `/mattermost/config`         | `config.json` and other Mattermost runtime config    |
+| `mattermost` | `logs`           | `/mattermost/logs`           | Mattermost server logs                               |
+| `mattermost` | `plugins`        | `/mattermost/plugins`        | Server-side plugin install directory                 |
+| `mattermost` | `client-plugins` | `/mattermost/client/plugins` | Client-side (webapp) plugin bundle directory         |
+| `db`         | (root)           | `/var/lib/postgresql`        | PostgreSQL data directory                            |
 
 ---
 
 ## Installation and First-Run Flow
 
-No special setup. Install and start — the web page is immediately available.
+1. On install, StartOS generates a 24-character random PostgreSQL password and stores it in `store.json` on the `main` volume.
+2. On every start, a `chown` oneshot prepares the `mattermost` volume's subdirectories.
+3. PostgreSQL starts next; the `mmuser` / `mattermost` role and database are created on first run from `POSTGRES_*` env vars.
+4. The Mattermost daemon starts last, applies any database migrations, and listens on `:8065`.
+5. The first user to register through the web UI becomes the System Admin (Mattermost's default behavior).
+
+No setup wizard is skipped or pre-filled — the only first-run actions are creating a team and an admin account in the web UI.
 
 ---
 
 ## Configuration Management
 
-No configurable settings. The service runs with no user-facing configuration.
+| StartOS-managed                                                                          | Upstream-managed                                                |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `MM_SQLSETTINGS_DRIVERNAME` (forced to `postgres`)                                       | All other settings via System Console (Mattermost web UI)       |
+| `MM_SQLSETTINGS_DATASOURCE` (points at the local Postgres sidecar)                       | `config.json` on the `mattermost` volume, subpath `config`      |
+| `MM_SERVICESETTINGS_LISTENADDRESS` (forced to `:8065`)                                   | `mmctl` (if invoked via the container's entrypoint)             |
+| `MM_PLUGINSETTINGS_ENABLEUPLOADS` (set to `true` so the System Console plugin uploader works) |                                                                 |
+
+Other Mattermost configuration (SMTP, plugins, site URL, etc.) is set through the System Console or by editing `config.json` directly on the `mattermost` volume.
 
 ---
 
 ## Network Access and Interfaces
 
-| Interface | Port | Protocol | Purpose              |
-| --------- | ---- | -------- | -------------------- |
-| Web UI    | 80   | HTTP     | Hello World web page |
+| Interface | Port | Protocol | Purpose                  |
+| --------- | ---- | -------- | ------------------------ |
+| Web UI    | 8065 | HTTP     | Mattermost web interface |
+
+Upstream Mattermost also defines ports `8067`, `8074` and `8075` for metrics / cluster gossip / job server traffic. Those are not exposed by this package — they are only meaningful in a multi-node enterprise deployment.
 
 **Access methods:**
 
@@ -74,6 +99,8 @@ No configurable settings. The service runs with no user-facing configuration.
 - `<hostname>.local` with unique port
 - Tor `.onion` address
 - Custom domains (if configured)
+
+If you set a custom domain or front Mattermost with a reverse proxy, configure the matching **Site URL** in the System Console so links and Push notifications use the correct host.
 
 ---
 
@@ -87,17 +114,20 @@ None.
 
 **Included in backup:**
 
-- `main` volume
+- `main` volume (StartOS package state)
+- `mattermost` volume (uploads, config, logs, plugins)
+- PostgreSQL database (captured with `pg_dump`)
 
-**Restore behavior:** Volume is fully restored before the service starts.
+**Restore behavior:** All volumes and the PostgreSQL dump are restored before the service starts; Mattermost replays any migrations against the restored database on first launch.
 
 ---
 
 ## Health Checks
 
-| Check         | Method              | Messages                                                           |
-| ------------- | ------------------- | ------------------------------------------------------------------ |
-| Web Interface | Port listening (80) | Success: "The web interface is ready" / Error: "The web interface is not ready" |
+| Check         | Method                                            | Messages                                                                       |
+| ------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Database      | `pg_isready` against the PostgreSQL sidecar       | Loading: "Waiting for PostgreSQL to be ready" / Success: "PostgreSQL is ready" |
+| Web Interface | Port listening (`8065`) with a 120 s grace period | Success: "Mattermost is ready" / Error: "Mattermost is not ready"              |
 
 ---
 
@@ -109,13 +139,18 @@ None.
 
 ## Limitations and Differences
 
-1. **No meaningful functionality** — this is a reference/template package only
+1. **Team Edition only** — this package ships the open source `mattermost-team-edition` image. Enterprise-only features (LDAP/SAML SSO, compliance exports, high availability, etc.) are not available.
+2. **Single-node deployment** — there is no cluster gossip, metrics, or job-server port published. Mattermost runs as one process on one StartOS device.
+3. **Local PostgreSQL only** — the package is wired to its own bundled PostgreSQL sidecar, listening on `127.0.0.1`. Pointing Mattermost at an external database is not supported.
+4. **Distroless image** — the Mattermost container has no shell, so admin operations from inside the container must use `mmctl --local` (the upstream way), not `docker exec sh`.
 
 ---
 
 ## What Is Unchanged from Upstream
 
-The service is identical to upstream. There are no modifications.
+- The Mattermost server binary, all bundled plugins, and the web client are exactly as published in `mattermost/mattermost-team-edition`.
+- The default PostgreSQL schema, migrations, and `mmctl` behavior are unchanged.
+- All Mattermost System Console settings (apart from those listed under **StartOS-managed** above) behave as documented upstream.
 
 ---
 
@@ -128,14 +163,23 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development wo
 ## Quick Reference for AI Consumers
 
 ```yaml
-package_id: hello-world
-image: ghcr.io/start9labs/hello-world
-architectures: [x86_64, aarch64, riscv64]
+package_id: mattermost
+architectures: [x86_64]
 volumes:
-  main: /data
+  main: (StartOS state — store.json)
+  mattermost/data: /mattermost/data
+  mattermost/config: /mattermost/config
+  mattermost/logs: /mattermost/logs
+  mattermost/plugins: /mattermost/plugins
+  mattermost/client-plugins: /mattermost/client/plugins
+  db: /var/lib/postgresql
 ports:
-  ui: 80
+  ui: 8065
 dependencies: none
-startos_managed_env_vars: none
+startos_managed_env_vars:
+  - MM_SQLSETTINGS_DRIVERNAME
+  - MM_SQLSETTINGS_DATASOURCE
+  - MM_SERVICESETTINGS_LISTENADDRESS
+  - MM_PLUGINSETTINGS_ENABLEUPLOADS
 actions: none
 ```

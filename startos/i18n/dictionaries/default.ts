@@ -2,14 +2,17 @@ export const DEFAULT_LANG = 'en_US'
 
 const dict = {
   // main.ts
-  'Starting Hello World!': 0,
-  'Web Interface': 1,
-  'The web interface is ready': 2,
-  'The web interface is not ready': 3,
+  'Starting Mattermost!': 0,
+  Database: 1,
+  'Waiting for PostgreSQL to be ready': 2,
+  'PostgreSQL is ready': 3,
+  'Web Interface': 4,
+  'Mattermost is ready': 5,
+  'Mattermost is not ready': 6,
 
   // interfaces.ts
-  'Web UI': 4,
-  'The web interface of Hello World': 5,
+  'Web UI': 7,
+  'The Mattermost web interface': 8,
 } as const
 
 /**
