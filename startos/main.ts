@@ -29,7 +29,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
     const customFrom = smtp.value.customFrom as string | undefined
     if (smtpCredentials && customFrom) smtpCredentials.from = customFrom
   } else if (smtp.selection === 'custom') {
-    smtpCredentials = smtp.value as unknown as T.SmtpValue
+    const { host, from, username, password, security } =
+      smtp.value.provider.value
+    smtpCredentials = {
+      host,
+      from,
+      username,
+      password: password ?? null,
+      port: Number(security.value.port),
+      security: security.selection,
+    }
   }
 
   const smtpEnv: Record<string, string> = {}
@@ -45,11 +54,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     smtpEnv.MM_EMAILSETTINGS_FEEDBACKEMAIL = smtpCredentials.from
     smtpEnv.MM_EMAILSETTINGS_FEEDBACKNAME = 'Mattermost'
     smtpEnv.MM_EMAILSETTINGS_CONNECTIONSECURITY =
-      smtpCredentials.security === 'tls'
-        ? 'TLS'
-        : smtpCredentials.security === 'starttls'
-          ? 'STARTTLS'
-          : ''
+      smtpCredentials.security === 'tls' ? 'TLS' : 'STARTTLS'
   }
 
   const siteUrlEnv: Record<string, string> = siteUrl
