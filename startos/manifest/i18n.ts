@@ -3,8 +3,7 @@ export const short = {
   es_ES: 'Plataforma de colaboración y mensajería en equipo de código abierto',
   de_DE:
     'Open-Source-Plattform für Teamzusammenarbeit und Nachrichtenaustausch',
-  pl_PL:
-    'Otwartoźródłowa platforma do współpracy zespołowej i komunikacji',
+  pl_PL: 'Otwartoźródłowa platforma do współpracy zespołowej i komunikacji',
   fr_FR:
     'Plateforme open source de collaboration et de messagerie pour les équipes',
 }
@@ -19,5 +18,5 @@ export const long = {
   pl_PL:
     'Mattermost to samodzielnie hostowana, otwartoźródłowa platforma do komunikacji i współpracy — przestrzeń czatu w stylu Slack dla zespołów. Organizuj rozmowy w kanałach, udostępniaj pliki, przeprowadzaj ankiety, integruj narzędzia deweloperskie i przechowuj każdą wiadomość oraz przesłany plik na własnym serwerze.',
   fr_FR:
-    "Mattermost est une plateforme de messagerie et de collaboration auto-hébergée et open source — un espace de discussion de style Slack pour les équipes. Organisez les conversations dans des canaux, partagez des fichiers, lancez des sondages, intégrez vos outils de développement et conservez chaque message et fichier téléchargé sur votre propre serveur.",
+    'Mattermost est une plateforme de messagerie et de collaboration auto-hébergée et open source — un espace de discussion de style Slack pour les équipes. Organisez les conversations dans des canaux, partagez des fichiers, lancez des sondages, intégrez vos outils de développement et conservez chaque message et fichier téléchargé sur votre propre serveur.',
 }

@@ -42,21 +42,22 @@
 | Entrypoint    | Image default (`/mattermost/bin/mattermost`); PostgreSQL bound to `127.0.0.1` |
 | Run as        | UID/GID `2000:2000` (the image's `mattermost` user)              |
 
-A short `chown` oneshot runs before PostgreSQL on every start to (re)create the `data`, `config`, `logs`, `plugins` and `client-plugins` subdirectories of the `mattermost` volume and align ownership to `2000:2000`, since the Mattermost image is distroless and cannot perform that itself.
+A short `chown` oneshot runs before PostgreSQL on every start to (re)create the `data`, `config`, `logs`, `plugins`, `client-plugins`, and `run` subdirectories of the `mattermost` volume and align ownership to `2000:2000`, since the Mattermost image is distroless and cannot perform that itself.
 
 ---
 
 ## Volume and Data Layout
 
-| Volume       | Subpath          | Mount point                  | Purpose                                              |
-| ------------ | ---------------- | ---------------------------- | ---------------------------------------------------- |
-| `main`       | `store.json`     | (host file)                  | StartOS package state — currently the Postgres password |
-| `mattermost` | `data`           | `/mattermost/data`           | File uploads, search indexes, attachments            |
-| `mattermost` | `config`         | `/mattermost/config`         | `config.json` and other Mattermost runtime config    |
-| `mattermost` | `logs`           | `/mattermost/logs`           | Mattermost server logs                               |
-| `mattermost` | `plugins`        | `/mattermost/plugins`        | Server-side plugin install directory                 |
-| `mattermost` | `client-plugins` | `/mattermost/client/plugins` | Client-side (webapp) plugin bundle directory         |
-| `db`         | (root)           | `/var/lib/postgresql`        | PostgreSQL data directory                            |
+| Volume       | Subpath          | Mount point                  | Purpose                                                                       |
+| ------------ | ---------------- | ---------------------------- | ----------------------------------------------------------------------------- |
+| `main`       | `store.json`     | (host file)                  | StartOS package state (Postgres password, Site URL, SMTP creds, signup flags) |
+| `mattermost` | `data`           | `/mattermost/data`           | File uploads, search indexes, attachments                                     |
+| `mattermost` | `config`         | `/mattermost/config`         | `config.json` and other Mattermost runtime config                             |
+| `mattermost` | `logs`           | `/mattermost/logs`           | Mattermost server logs                                                        |
+| `mattermost` | `plugins`        | `/mattermost/plugins`        | Server-side plugin install directory                                          |
+| `mattermost` | `client-plugins` | `/mattermost/client/plugins` | Client-side (webapp) plugin bundle directory                                  |
+| `mattermost` | `run`            | `/mattermost/run`            | Local-mode Unix socket so StartOS actions can call `mmctl --local`            |
+| `db`         | (root)           | `/var/lib/postgresql`        | PostgreSQL data directory                                                     |
 
 ---
 
@@ -74,14 +75,23 @@ No setup wizard is skipped or pre-filled — the only first-run actions are crea
 
 ## Configuration Management
 
-| StartOS-managed                                                                          | Upstream-managed                                                |
-| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `MM_SQLSETTINGS_DRIVERNAME` (forced to `postgres`)                                       | All other settings via System Console (Mattermost web UI)       |
-| `MM_SQLSETTINGS_DATASOURCE` (points at the local Postgres sidecar)                       | `config.json` on the `mattermost` volume, subpath `config`      |
-| `MM_SERVICESETTINGS_LISTENADDRESS` (forced to `:8065`)                                   | `mmctl` (if invoked via the container's entrypoint)             |
-| `MM_PLUGINSETTINGS_ENABLEUPLOADS` (set to `true` so the System Console plugin uploader works) |                                                                 |
+| StartOS-managed env var                       | Source                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `MM_SQLSETTINGS_DRIVERNAME`                   | Forced to `postgres`                                                                                |
+| `MM_SQLSETTINGS_DATASOURCE`                   | Points at the local Postgres sidecar                                                                |
+| `MM_SERVICESETTINGS_LISTENADDRESS`            | Forced to `:8065`                                                                                   |
+| `MM_PLUGINSETTINGS_ENABLEUPLOADS`             | Forced to `true` so the System Console plugin uploader works                                        |
+| `MM_SERVICESETTINGS_ENABLELOCALMODE`          | Forced to `true` so StartOS actions can drive `mmctl --local`                                       |
+| `MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION`  | Forced to `/mattermost/run/mattermost_local.socket` (shared with action sidecars)                   |
+| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`            | Forced to `false` (telemetry off by default)                                                        |
+| `MM_SERVICESETTINGS_SITEURL`                  | "Set Primary URL" action                                                                            |
+| `MM_EMAILSETTINGS_*` (SMTP family)            | "Configure SMTP" action                                                                             |
+| `MM_TEAMSETTINGS_ENABLEUSERCREATION`          | "Configure Signups" action                                                                          |
+| `MM_TEAMSETTINGS_ENABLEOPENSERVER`            | "Configure Signups" action                                                                          |
 
-Other Mattermost configuration (SMTP, plugins, site URL, etc.) is set through the System Console or by editing `config.json` directly on the `mattermost` volume.
+Anything not listed here (channels, teams, integrations, custom branding, plugins, push notification server, etc.) is set through the System Console in Mattermost itself, or by editing `config.json` directly on the `mattermost` volume.
+
+Env vars set by StartOS lock the corresponding field in the System Console — Mattermost intentionally shows them read-only with a "set via env var" indicator. To change one, use the matching StartOS action.
 
 ---
 
@@ -100,13 +110,22 @@ Upstream Mattermost also defines ports `8067`, `8074` and `8075` for metrics / c
 - Tor `.onion` address
 - Custom domains (if configured)
 
-If you set a custom domain or front Mattermost with a reverse proxy, configure the matching **Site URL** in the System Console so links and Push notifications use the correct host.
+Use the **Set Primary URL** action to pick which of these is the Site URL Mattermost embeds in emails, OAuth callbacks, push notifications, and mobile deep links.
 
 ---
 
 ## Actions (StartOS UI)
 
-None.
+| Action                       | Group    | Effect                                                                                                                 |
+| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Set Primary URL              | —        | Sets `MM_SERVICESETTINGS_SITEURL` from the bound interface's available hostnames. Restart picks up the change.         |
+| Configure SMTP               | —        | Sets the `MM_EMAILSETTINGS_*` family so password resets, invitations, and mention notifications go out.                |
+| Configure Signups            | —        | Toggles `MM_TEAMSETTINGS_ENABLEUSERCREATION` and `MM_TEAMSETTINGS_ENABLEOPENSERVER`.                                   |
+| Reset User Password          | Recovery | Runs `mmctl --local user change-password` against the running daemon. Returns a generated password.                    |
+| Promote to System Admin      | Recovery | Runs `mmctl --local roles system-admin <user>`.                                                                        |
+| Demote from System Admin     | Recovery | Runs `mmctl --local roles member <user>`.                                                                              |
+
+The three Recovery actions require the daemon to be running; they spin up a temporary sidecar that mounts the `mattermost/run` subpath and talks to the daemon's local-mode Unix socket. No login required.
 
 ---
 
@@ -172,6 +191,7 @@ volumes:
   mattermost/logs: /mattermost/logs
   mattermost/plugins: /mattermost/plugins
   mattermost/client-plugins: /mattermost/client/plugins
+  mattermost/run: /mattermost/run  # mmctl --local socket
   db: /var/lib/postgresql
 ports:
   ui: 8065
@@ -181,5 +201,18 @@ startos_managed_env_vars:
   - MM_SQLSETTINGS_DATASOURCE
   - MM_SERVICESETTINGS_LISTENADDRESS
   - MM_PLUGINSETTINGS_ENABLEUPLOADS
-actions: none
+  - MM_SERVICESETTINGS_ENABLELOCALMODE
+  - MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION
+  - MM_LOGSETTINGS_ENABLEDIAGNOSTICS
+  - MM_SERVICESETTINGS_SITEURL                  # via Set Primary URL action
+  - MM_EMAILSETTINGS_*                          # via Configure SMTP action
+  - MM_TEAMSETTINGS_ENABLEUSERCREATION          # via Configure Signups action
+  - MM_TEAMSETTINGS_ENABLEOPENSERVER            # via Configure Signups action
+actions:
+  - set-primary-url
+  - manage-smtp
+  - manage-signup
+  - reset-user-password
+  - promote-to-admin
+  - demote-from-admin
 ```

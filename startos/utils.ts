@@ -12,6 +12,9 @@ export const MM_USER_GID = 2000
 export const MATTERMOST_DIR = '/mattermost'
 export const POSTGRES_DIR = '/var/lib/postgresql'
 
+export const MM_RUN_DIR = `${MATTERMOST_DIR}/run`
+export const MM_LOCAL_SOCKET = `${MM_RUN_DIR}/mattermost_local.socket`
+
 export const mattermostMounts = sdk.Mounts.of()
   .mountVolume({
     volumeId: 'mattermost',
@@ -43,6 +46,19 @@ export const mattermostMounts = sdk.Mounts.of()
     mountpoint: `${MATTERMOST_DIR}/client/plugins`,
     readonly: false,
   })
+  .mountVolume({
+    volumeId: 'mattermost',
+    subpath: 'run',
+    mountpoint: MM_RUN_DIR,
+    readonly: false,
+  })
+
+export const mmctlMounts = sdk.Mounts.of().mountVolume({
+  volumeId: 'mattermost',
+  subpath: 'run',
+  mountpoint: MM_RUN_DIR,
+  readonly: false,
+})
 
 const chownMountpoint = '/mnt/mattermost'
 
@@ -56,7 +72,7 @@ export const chownMounts = sdk.Mounts.of().mountVolume({
 export const chownCommand = [
   'sh',
   '-c',
-  `mkdir -p ${chownMountpoint}/data ${chownMountpoint}/config ${chownMountpoint}/logs ${chownMountpoint}/plugins ${chownMountpoint}/client-plugins && chown -R ${MM_USER_UID}:${MM_USER_GID} ${chownMountpoint}`,
+  `mkdir -p ${chownMountpoint}/data ${chownMountpoint}/config ${chownMountpoint}/logs ${chownMountpoint}/plugins ${chownMountpoint}/client-plugins ${chownMountpoint}/run && chown -R ${MM_USER_UID}:${MM_USER_GID} ${chownMountpoint}`,
 ] as const satisfies [string, ...string[]]
 
 export const postgresMount = sdk.Mounts.of().mountVolume({
@@ -95,4 +111,20 @@ export function getPostgresSub(effects: T.Effects) {
 
 export function buildDataSource(password: string): string {
   return `postgres://${postgresUser}:${encodeURIComponent(password)}@127.0.0.1:${postgresPort}/${postgresDb}?sslmode=disable&connect_timeout=10`
+}
+
+export async function getNonLocalUrls(effects: T.Effects) {
+  return sdk.serviceInterface
+    .getOwn(effects, 'ui', (i) => i?.addressInfo?.nonLocal.format() || [])
+    .const()
+}
+
+export function mmctlCommand(args: string[]): [string, ...string[]] {
+  return [
+    'mmctl',
+    '--local',
+    '--local-socket-path',
+    MM_LOCAL_SOCKET,
+    ...args,
+  ] as [string, ...string[]]
 }
