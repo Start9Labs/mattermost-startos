@@ -2,19 +2,28 @@ import { setupManifest } from '@start9labs/start-sdk'
 import { long, short } from './i18n'
 
 export const manifest = setupManifest({
-  id: 'hello-world',
-  title: 'Hello World',
-  license: 'MIT',
-  packageRepo: 'https://github.com/Start9Labs/hello-world-startos',
-  upstreamRepo: 'https://github.com/Start9Labs/hello-world',
-  marketingUrl: 'https://start9.com/',
-  donationUrl: 'https://donate.start9.com/',
+  id: 'mattermost',
+  title: 'Mattermost',
+  license: 'apache-2.0',
+  packageRepo: 'https://github.com/Start9Labs/mattermost-startos',
+  upstreamRepo: 'https://github.com/mattermost/mattermost',
+  marketingUrl: 'https://mattermost.com/',
+  docsUrls: ['https://docs.mattermost.com/'],
+  donationUrl: null,
   description: { short, long },
-  volumes: ['main'],
+  volumes: ['main', 'mattermost', 'db'],
   images: {
-    'hello-world': {
-      source: { dockerTag: 'ghcr.io/start9labs/hello-world:2.0.0' },
-      arch: ['x86_64', 'aarch64', 'riscv64'],
+    mattermost: {
+      source: {
+        dockerTag: 'mattermost/mattermost-team-edition:11.7.0',
+      },
+      arch: ['x86_64'],
+    },
+    postgres: {
+      source: {
+        dockerTag: 'postgres:16-alpine',
+      },
+      arch: ['x86_64'],
     },
   },
   alerts: {
