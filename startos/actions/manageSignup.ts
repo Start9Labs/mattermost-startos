@@ -6,17 +6,17 @@ const { InputSpec, Value } = sdk
 
 export const inputSpec = InputSpec.of({
   enableUserCreation: Value.toggle({
-    name: i18n('Allow New User Signups'),
+    name: i18n('Allow Account Creation'),
     default: true,
     description: i18n(
-      'When disabled, no new accounts can be created — only existing users can sign in. Must be enabled at first launch so the initial System Admin can register.',
+      'Master switch for all new accounts. When off, nobody new can join — not even by invitation. Leave on unless you want to freeze the member list entirely.',
     ),
   }),
   enableOpenServer: Value.toggle({
-    name: i18n('Open Server (Anyone Can Sign Up)'),
+    name: i18n('Public Signups'),
     default: false,
     description: i18n(
-      'When enabled, anyone who can reach your Mattermost URL can create an account without an invitation. Leave disabled to restrict signups to people invited by an existing team member.',
+      'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled (recommended), the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.',
     ),
   }),
 })
@@ -27,7 +27,7 @@ export const manageSignup = sdk.Action.withInput(
   async ({ effects }) => ({
     name: i18n('Configure Signups'),
     description: i18n(
-      'Control whether new users can create accounts and whether your server is open to the public.',
+      'Control whether new accounts can be created at all, and whether sign-up is public or invite-only.',
     ),
     warning: null,
     allowedStatuses: 'any',

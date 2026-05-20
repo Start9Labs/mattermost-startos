@@ -28,12 +28,12 @@ const dict = {
   'Configure outbound email so Mattermost can send password resets, account invitations, and mention notifications.': 15,
 
   // actions/manageSignup.ts
-  'Allow New User Signups': 16,
-  'When disabled, no new accounts can be created — only existing users can sign in. Must be enabled at first launch so the initial System Admin can register.': 17,
-  'Open Server (Anyone Can Sign Up)': 18,
-  'When enabled, anyone who can reach your Mattermost URL can create an account without an invitation. Leave disabled to restrict signups to people invited by an existing team member.': 19,
+  'Allow Account Creation': 16,
+  'Master switch for all new accounts. When off, nobody new can join — not even by invitation. Leave on unless you want to freeze the member list entirely.': 17,
+  'Public Signups': 18,
+  'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled (recommended), the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.': 19,
   'Configure Signups': 20,
-  'Control whether new users can create accounts and whether your server is open to the public.': 21,
+  'Control whether new accounts can be created at all, and whether sign-up is public or invite-only.': 21,
 
   // actions/resetUserPassword.ts
   'Username or Email': 22,

@@ -16,8 +16,17 @@
 1. Open Mattermost's **Dashboard** and click the **Web UI** interface to open the login page.
 2. The first time you visit, Mattermost will prompt you to **create an account**. This account automatically becomes the System Admin — choose a strong password and treat it like one.
 3. Mattermost will walk you through creating your first **team** and inviting the first members. Invite links work on any of Mattermost's URLs (LAN, `.local`, Tor, or a custom domain).
-4. If you plan to use Mattermost over a public address or a custom domain, open the **System Console → Environment → Web Server** and set the **Site URL** to that exact hostname. Mattermost embeds it in invite links, password-reset emails, and push notifications.
-5. Optional but recommended: in the System Console, configure **SMTP** so users can receive invite, mention, and password-reset emails, and **Push Notification Server** if you want mobile push.
+4. Run the **Set Primary URL** action from the StartOS Actions menu to choose which of your addresses Mattermost treats as its Site URL. Mattermost embeds it in invite links, password-reset emails, and push notifications, so set it before sending invites.
+5. Recommended: run the **Configure SMTP** action so users can receive invite, mention, and password-reset emails. (Mobile push still goes through Mattermost's **Push Notification Server**, configured in the System Console.)
+
+## Signups: invite-only by default
+
+This package ships **invite-only**: the public "create account" page is closed, so random visitors can't register. The very first visitor still becomes your System Admin, and after that everyone joins through an invite link or email invitation — the recommended posture for a self-hosted server.
+
+Two toggles in the **Configure Signups** action control this:
+
+- **Allow Account Creation** — the master switch for *all* new accounts. Leave it on; turning it off blocks invitations too, effectively freezing your member list.
+- **Public Signups** — off by default. Turn it on only if you want anyone who can reach your URL to self-register without an invite.
 
 ## Using Mattermost
 
