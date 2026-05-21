@@ -1,6 +1,6 @@
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { mmctlCommand, mmctlMounts } from '../utils'
+import { mmctlCommand, mmctlEnv, mmctlMounts } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -41,7 +41,9 @@ export const promoteToAdmin = sdk.Action.withInput(
       mmctlMounts,
       'mmctl-promote',
       (sub) =>
-        sub.execFail(mmctlCommand(['roles', 'system-admin', input.user])),
+        sub.execFail(mmctlCommand(['roles', 'system-admin', input.user]), {
+          env: mmctlEnv,
+        }),
     )
 
     return {

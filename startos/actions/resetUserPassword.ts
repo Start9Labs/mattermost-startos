@@ -1,7 +1,7 @@
 import { utils } from '@start9labs/start-sdk'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { mmctlCommand, mmctlMounts } from '../utils'
+import { mmctlCommand, mmctlEnv, mmctlMounts } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -55,6 +55,7 @@ export const resetUserPassword = sdk.Action.withInput(
             '--password',
             newPassword,
           ]),
+          { env: mmctlEnv },
         ),
     )
 

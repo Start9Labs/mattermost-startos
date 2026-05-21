@@ -1,6 +1,6 @@
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { mmctlCommand, mmctlMounts } from '../utils'
+import { mmctlCommand, mmctlEnv, mmctlMounts } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -40,7 +40,10 @@ export const demoteFromAdmin = sdk.Action.withInput(
       { imageId: 'mattermost' },
       mmctlMounts,
       'mmctl-demote',
-      (sub) => sub.execFail(mmctlCommand(['roles', 'member', input.user])),
+      (sub) =>
+        sub.execFail(mmctlCommand(['roles', 'member', input.user]), {
+          env: mmctlEnv,
+        }),
     )
 
     return {
