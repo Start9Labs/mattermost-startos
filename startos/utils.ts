@@ -120,11 +120,10 @@ export async function getNonLocalUrls(effects: T.Effects) {
 }
 
 export function mmctlCommand(args: string[]): [string, ...string[]] {
-  return [
-    'mmctl',
-    '--local',
-    '--local-socket-path',
-    MM_LOCAL_SOCKET,
-    ...args,
-  ] as [string, ...string[]]
+  return ['mmctl', '--local', ...args] as [string, ...string[]]
 }
+
+// mmctl has no --local-socket-path flag; it reads the local-mode socket
+// location from this env var (default /var/tmp/mattermost_local.socket).
+// Point it at the socket on the shared `run` mount so it reaches the daemon.
+export const mmctlEnv = { MMCTL_LOCAL_SOCKET_PATH: MM_LOCAL_SOCKET }
