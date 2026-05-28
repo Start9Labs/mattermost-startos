@@ -1,3 +1,34 @@
+Mattermost licensing
+====================
+
+Mattermost is published by Mattermost, Inc. under a compound licensing model,
+so a single SPDX identifier does not describe it accurately. For that reason
+the package manifest declares its license as "other". The authoritative terms
+live in upstream's LICENSE.txt:
+
+    https://github.com/mattermost/mattermost/blob/master/LICENSE.txt
+
+In summary, upstream states:
+
+  - You may use the compiled versions of the Mattermost platform produced by
+    Mattermost, Inc. under an MIT License (see MIT-COMPILED-LICENSE.md, which
+    is included in those compiled releases).
+  - The Mattermost source code itself is licensed under the GNU Affero General
+    Public License v3.0 (Team Edition) together with the Mattermost Source
+    Available License (for the Enterprise-licensed portions). See LICENSE.txt
+    and the per-directory license headers upstream.
+
+This StartOS package ships the official compiled Mattermost server published by
+Mattermost, Inc., which is covered by the compiled-binary MIT grant above. It
+does not build Mattermost from source or redistribute the source tree.
+
+Packaging code
+--------------
+
+The StartOS packaging code in this repository (the manifest, actions, scripts,
+and other wrapper code authored by Start9 Labs) is made available under the MIT
+License:
+
 MIT License
 
 Copyright (c) 2024 Start9 Labs

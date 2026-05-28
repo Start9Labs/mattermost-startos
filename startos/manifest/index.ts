@@ -4,7 +4,7 @@ import { long, short } from './i18n'
 export const manifest = setupManifest({
   id: 'mattermost',
   title: 'Mattermost',
-  license: 'apache-2.0',
+  license: 'other',
   packageRepo: 'https://github.com/Start9Labs/mattermost-startos',
   upstreamRepo: 'https://github.com/mattermost/mattermost',
   marketingUrl: 'https://mattermost.com/',
