@@ -1,6 +1,6 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
-export const v_11_7_2 = VersionInfo.of({
+export const current = VersionInfo.of({
   version: '11.7.2:0',
   releaseNotes: {
     en_US: 'Bumps Mattermost → 11.7.2 (security fixes).',
