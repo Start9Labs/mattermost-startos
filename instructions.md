@@ -2,8 +2,7 @@
 
 ## Documentation
 
-- [Mattermost User's Guide](https://docs.mattermost.com/end-user-guide/end-user-guide-index.html) — chatting, channels, teams, search, and the desktop / mobile apps.
-- [Mattermost Administrator's Guide](https://docs.mattermost.com/administration-guide/administration-guide-index.html) — the System Console, integrations, plugins, and configuration reference.
+- [Mattermost documentation](https://docs.mattermost.com/) — the upstream user and administrator guides: channels, teams, search, the System Console, integrations, plugins, and configuration.
 
 ## What you get on StartOS
 
