@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '11.7.1:0',
+  version: '11.8.2:0',
   releaseNotes: {
     en_US:
-      'Bumps Mattermost → 11.7.1. Fixes the Recovery and Management actions, which previously failed with an mmctl error.',
+      'Updated Mattermost to 11.8.2, a patch release with bug fixes. Full release notes: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
     es_ES:
-      'Actualiza Mattermost → 11.7.1. Corrige las acciones de Recuperación y Administración, que antes fallaban con un error de mmctl.',
+      'Actualiza Mattermost a 11.8.2, una versión de corrección con arreglos de errores. Notas completas: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
     de_DE:
-      'Aktualisiert Mattermost → 11.7.1. Behebt die Wiederherstellungs- und Verwaltungsaktionen, die zuvor mit einem mmctl-Fehler fehlschlugen.',
+      'Aktualisiert Mattermost auf 11.8.2, ein Patch-Release mit Fehlerbehebungen. Vollständige Versionshinweise: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
     pl_PL:
-      'Aktualizuje Mattermost → 11.7.1. Naprawia akcje odzyskiwania i zarządzania, które wcześniej kończyły się błędem mmctl.',
+      'Aktualizuje Mattermost do 11.8.2, wydanie poprawkowe z poprawkami błędów. Pełne informacje o wydaniu: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
     fr_FR:
-      'Met à jour Mattermost → 11.7.1. Corrige les actions de récupération et de gestion, qui échouaient auparavant avec une erreur mmctl.',
+      'Met à jour Mattermost vers 11.8.2, une version corrective avec des corrections de bugs. Notes de version complètes : https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
   },
   migrations: {
     up: async ({ effects }) => {},
