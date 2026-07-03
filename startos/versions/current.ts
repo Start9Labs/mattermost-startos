@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '11.8.2:0',
+  version: '11.8.2:1',
   releaseNotes: {
     en_US:
-      'Updated Mattermost to 11.8.2, a patch release with bug fixes. Full release notes: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
+      'Internal updates (start-sdk 2.0.x). Fixes database backups that could previously be created empty.',
     es_ES:
-      'Actualiza Mattermost a 11.8.2, una versión de corrección con arreglos de errores. Notas completas: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
+      'Actualizaciones internas (start-sdk 2.0.x). Corrige las copias de seguridad de la base de datos que antes podían crearse vacías.',
     de_DE:
-      'Aktualisiert Mattermost auf 11.8.2, ein Patch-Release mit Fehlerbehebungen. Vollständige Versionshinweise: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
+      'Interne Aktualisierungen (start-sdk 2.0.x). Behebt Datenbank-Backups, die zuvor leer erstellt werden konnten.',
     pl_PL:
-      'Aktualizuje Mattermost do 11.8.2, wydanie poprawkowe z poprawkami błędów. Pełne informacje o wydaniu: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
+      'Aktualizacje wewnętrzne (start-sdk 2.0.x). Naprawia kopie zapasowe bazy danych, które wcześniej mogły być tworzone jako puste.',
     fr_FR:
-      'Met à jour Mattermost vers 11.8.2, une version corrective avec des corrections de bugs. Notes de version complètes : https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html',
+      'Mises à jour internes (start-sdk 2.0.x). Corrige les sauvegardes de base de données qui pouvaient auparavant être créées vides.',
   },
   migrations: {
     up: async ({ effects }) => {},

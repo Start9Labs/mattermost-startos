@@ -6,6 +6,11 @@ export const postgresPort = 5432
 export const postgresUser = 'mmuser'
 export const postgresDb = 'mattermost'
 
+// Host id (the `sdk.MultiHost.of` group) vs. the interface id exported on it —
+// they differ here, so keep both for `sdk.host.getOwn` lookups.
+export const uiHostId = 'ui-multi'
+export const uiInterfaceId = 'ui'
+
 export const MM_USER_UID = 2000
 export const MM_USER_GID = 2000
 
@@ -113,9 +118,14 @@ export function buildDataSource(password: string): string {
   return `postgres://${postgresUser}:${encodeURIComponent(password)}@127.0.0.1:${postgresPort}/${postgresDb}?sslmode=disable&connect_timeout=10`
 }
 
-export async function getNonLocalUrls(effects: T.Effects) {
-  return sdk.serviceInterface
-    .getOwn(effects, 'ui', (i) => i?.addressInfo?.nonLocal.format() || [])
+export async function getNonLocalUrls(effects: T.Effects): Promise<string[]> {
+  return sdk.host
+    .getOwn(effects, uiHostId, (host) => {
+      const iface = Object.values(host?.bindings ?? {})
+        .flatMap((b) => Object.values(b.interfaces))
+        .find((i) => i.id === uiInterfaceId)
+      return iface?.addressInfo.nonLocal.format() || []
+    })
     .const()
 }
 
