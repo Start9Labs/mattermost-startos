@@ -61,9 +61,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
     ? { MM_SERVICESETTINGS_SITEURL: siteUrl }
     : {}
 
-  const chownSub = await getChownSub(effects)
-  const postgresSub = await getPostgresSub(effects)
-  const mattermostSub = await getMattermostSub(effects)
+  const chownSub = getChownSub(effects)
+  const postgresSub = getPostgresSub(effects)
+  const mattermostSub = getMattermostSub(effects)
 
   return sdk.Daemons.of(effects)
     .addOneshot('chown', {
