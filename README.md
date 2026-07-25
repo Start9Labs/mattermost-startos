@@ -34,13 +34,13 @@
 
 ## Image and Container Runtime
 
-| Property      | Value                                                            |
-| ------------- | ---------------------------------------------------------------- |
-| Mattermost    | `mattermost/mattermost-team-edition` (upstream, unmodified)      |
-| Database      | `postgres:16-alpine` (upstream, unmodified)                      |
-| Architectures | x86_64 (upstream `mattermost-team-edition` does not publish arm64) |
+| Property      | Value                                                                         |
+| ------------- | ----------------------------------------------------------------------------- |
+| Mattermost    | `mattermost/mattermost-team-edition` (upstream, unmodified)                   |
+| Database      | `postgres:16-alpine` (upstream, unmodified)                                   |
+| Architectures | x86_64 (upstream `mattermost-team-edition` does not publish arm64)            |
 | Entrypoint    | Image default (`/mattermost/bin/mattermost`); PostgreSQL bound to `127.0.0.1` |
-| Run as        | UID/GID `2000:2000` (the image's `mattermost` user)              |
+| Run as        | UID/GID `2000:2000` (the image's `mattermost` user)                           |
 
 A short `chown` oneshot runs before PostgreSQL on every start to (re)create the `data`, `config`, `logs`, `plugins`, `client-plugins`, and `run` subdirectories of the `mattermost` volume and align ownership to `2000:2000`, since the Mattermost image is distroless and cannot perform that itself.
 
@@ -75,19 +75,19 @@ No setup wizard is skipped or pre-filled — the only first-run actions are crea
 
 ## Configuration Management
 
-| StartOS-managed env var                       | Source                                                                                              |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `MM_SQLSETTINGS_DRIVERNAME`                   | Forced to `postgres`                                                                                |
-| `MM_SQLSETTINGS_DATASOURCE`                   | Points at the local Postgres sidecar                                                                |
-| `MM_SERVICESETTINGS_LISTENADDRESS`            | Forced to `:8065`                                                                                   |
-| `MM_PLUGINSETTINGS_ENABLEUPLOADS`             | Forced to `true` so the System Console plugin uploader works                                        |
-| `MM_SERVICESETTINGS_ENABLELOCALMODE`          | Forced to `true` so StartOS actions can drive `mmctl --local`                                       |
-| `MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION`  | Forced to `/mattermost/run/mattermost_local.socket` (shared with action sidecars)                   |
-| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`            | Forced to `false` (telemetry off by default)                                                        |
-| `MM_SERVICESETTINGS_SITEURL`                  | "Set Primary URL" action                                                                            |
-| `MM_EMAILSETTINGS_*` (SMTP family)            | "Configure SMTP" action                                                                             |
-| `MM_TEAMSETTINGS_ENABLEUSERCREATION`          | "Configure Signups" action                                                                          |
-| `MM_TEAMSETTINGS_ENABLEOPENSERVER`            | "Configure Signups" action                                                                          |
+| StartOS-managed env var                      | Source                                                                            |
+| -------------------------------------------- | --------------------------------------------------------------------------------- |
+| `MM_SQLSETTINGS_DRIVERNAME`                  | Forced to `postgres`                                                              |
+| `MM_SQLSETTINGS_DATASOURCE`                  | Points at the local Postgres sidecar                                              |
+| `MM_SERVICESETTINGS_LISTENADDRESS`           | Forced to `:8065`                                                                 |
+| `MM_PLUGINSETTINGS_ENABLEUPLOADS`            | Forced to `true` so the System Console plugin uploader works                      |
+| `MM_SERVICESETTINGS_ENABLELOCALMODE`         | Forced to `true` so StartOS actions can drive `mmctl --local`                     |
+| `MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION` | Forced to `/mattermost/run/mattermost_local.socket` (shared with action sidecars) |
+| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`           | Forced to `false` (telemetry off by default)                                      |
+| `MM_SERVICESETTINGS_SITEURL`                 | "Set Primary URL" action                                                          |
+| `MM_EMAILSETTINGS_*` (SMTP family)           | "Configure SMTP" action                                                           |
+| `MM_TEAMSETTINGS_ENABLEUSERCREATION`         | "Configure Signups" action                                                        |
+| `MM_TEAMSETTINGS_ENABLEOPENSERVER`           | "Configure Signups" action                                                        |
 
 Anything not listed here (channels, teams, integrations, custom branding, plugins, push notification server, etc.) is set through the System Console in Mattermost itself, or by editing `config.json` directly on the `mattermost` volume.
 
@@ -116,14 +116,14 @@ Use the **Set Primary URL** action to pick which of these is the Site URL Matter
 
 ## Actions (StartOS UI)
 
-| Action                       | Group    | Effect                                                                                                                 |
-| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Set Primary URL              | —        | Sets `MM_SERVICESETTINGS_SITEURL` from the bound interface's available hostnames. Restart picks up the change.         |
-| Configure SMTP               | —        | Sets the `MM_EMAILSETTINGS_*` family so password resets, invitations, and mention notifications go out.                |
-| Configure Signups            | —        | Toggles `MM_TEAMSETTINGS_ENABLEUSERCREATION` and `MM_TEAMSETTINGS_ENABLEOPENSERVER`.                                   |
-| Reset User Password          | Recovery | Runs `mmctl --local user change-password` against the running daemon. Returns a generated password.                    |
-| Promote to System Admin      | Recovery | Runs `mmctl --local roles system-admin <user>`.                                                                        |
-| Demote from System Admin     | Recovery | Runs `mmctl --local roles member <user>`.                                                                              |
+| Action                   | Group    | Effect                                                                                                         |
+| ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
+| Set Primary URL          | —        | Sets `MM_SERVICESETTINGS_SITEURL` from the bound interface's available hostnames. Restart picks up the change. |
+| Configure SMTP           | —        | Sets the `MM_EMAILSETTINGS_*` family so password resets, invitations, and mention notifications go out.        |
+| Configure Signups        | —        | Toggles `MM_TEAMSETTINGS_ENABLEUSERCREATION` and `MM_TEAMSETTINGS_ENABLEOPENSERVER`.                           |
+| Reset User Password      | Recovery | Runs `mmctl --local user change-password` against the running daemon. Returns a generated password.            |
+| Promote to System Admin  | Recovery | Runs `mmctl --local roles system-admin <user>`.                                                                |
+| Demote from System Admin | Recovery | Runs `mmctl --local roles member <user>`.                                                                      |
 
 The three Recovery actions require the daemon to be running; they spin up a temporary sidecar that mounts the `mattermost/run` subpath and talks to the daemon's local-mode Unix socket. No login required.
 
@@ -175,7 +175,7 @@ None.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
+Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
 
 ---
 
@@ -191,7 +191,7 @@ volumes:
   mattermost/logs: /mattermost/logs
   mattermost/plugins: /mattermost/plugins
   mattermost/client-plugins: /mattermost/client/plugins
-  mattermost/run: /mattermost/run  # mmctl --local socket
+  mattermost/run: /mattermost/run # mmctl --local socket
   db: /var/lib/postgresql
 ports:
   ui: 8065
@@ -204,10 +204,10 @@ startos_managed_env_vars:
   - MM_SERVICESETTINGS_ENABLELOCALMODE
   - MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION
   - MM_LOGSETTINGS_ENABLEDIAGNOSTICS
-  - MM_SERVICESETTINGS_SITEURL                  # via Set Primary URL action
-  - MM_EMAILSETTINGS_*                          # via Configure SMTP action
-  - MM_TEAMSETTINGS_ENABLEUSERCREATION          # via Configure Signups action
-  - MM_TEAMSETTINGS_ENABLEOPENSERVER            # via Configure Signups action
+  - MM_SERVICESETTINGS_SITEURL # via Set Primary URL action
+  - MM_EMAILSETTINGS_* # via Configure SMTP action
+  - MM_TEAMSETTINGS_ENABLEUSERCREATION # via Configure Signups action
+  - MM_TEAMSETTINGS_ENABLEOPENSERVER # via Configure Signups action
 actions:
   - set-primary-url
   - manage-smtp
