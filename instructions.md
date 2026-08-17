@@ -24,7 +24,7 @@ This package ships **invite-only**: the public "create account" page is closed, 
 
 Two toggles in the **Configure Signups** action control this:
 
-- **Allow Account Creation** — the master switch for *all* new accounts. Leave it on; turning it off blocks invitations too, effectively freezing your member list.
+- **Allow Account Creation** — the master switch for _all_ new accounts. Leave it on; turning it off blocks invitations too, effectively freezing your member list.
 - **Public Signups** — off by default. Turn it on only if you want anyone who can reach your URL to self-register without an invite.
 
 ## Using Mattermost

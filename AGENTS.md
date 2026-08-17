@@ -6,15 +6,13 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `mattermost`.** A leaf UI app with no dependents; the only exported interface is the `ui` web interface (host id `ui-multi`, interface id `ui` — both exported from `startos/utils.ts`).
-- **Two daemons plus a chown oneshot.** `main.ts` runs `mattermost-sub` (the Mattermost server, image `mattermost`) and `postgres-sub` (a bundled PostgreSQL, image `postgres`), preceded by the `mattermost-chown` oneshot (image `postgres`) that fixes volume ownership to uid/gid 2000. Postgres binds `127.0.0.1`; the server reaches it over loopback.
-- **Bundles its own PostgreSQL.** Backups go through `withPgDump` (`startos/backups.ts`); the DB password lives in `store.json`.
-- **Admin actions drive `mmctl` over the local-mode socket.** Promote/demote/reset-password spin up a temporary `mattermost`-image subcontainer and run `mmctl --local`, which reads the socket path from `MMCTL_LOCAL_SOCKET_PATH` on the shared `run` mount (`startos/utils.ts`).
-
-## Inspecting a running install
-
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach mattermost -n <name> -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `mattermost-sub` or `postgres-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
+- **The recovery actions reach Mattermost through the local-mode socket, not the network**, which is why they are `only-running` and why the `run` subpath is mounted into their subcontainers as well as the daemon's. `mmctl` has no flag for the socket path — it reads `MMCTL_LOCAL_SOCKET_PATH`, so that env var is what points it at the shared mount.
+- **`MM_SERVICESETTINGS_ENABLELOCALMODE` must stay on.** Without it the recovery actions have no way in, which is precisely the situation they exist for.
+- **The `mattermost` volume is mounted as six subpaths, not at its root**, so each directory lands where the image expects it. The `chown` oneshot creates all six and hands them to uid/gid 2000 before anything starts, because StartOS mounts volumes root-owned.
+- **`ENABLEUSERCREATION` and `ENABLEOPENSERVER` are different switches.** The first is a master gate that blocks even invitations; the second only controls self-service sign-up. Don't collapse them into one toggle.
+- **The database password lives in `store.json` on the `main` volume and is what backups authenticate with.** Moving it breaks `backups.ts` as well as `main`.
+- **x86_64 only** — both images are declared for that architecture alone. Adding aarch64 means verifying upstream publishes it for both.

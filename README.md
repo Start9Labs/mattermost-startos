@@ -4,13 +4,15 @@
 
 # Mattermost on StartOS
 
-> **Upstream docs:** <https://docs.mattermost.com/>
->
 > Everything not listed in this document should behave the same as upstream
 > Mattermost. If a feature, setting, or behavior is not mentioned here, the
-> upstream documentation is accurate and fully applicable.
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-[Mattermost](https://github.com/mattermost/mattermost) is a self-hosted, open source messaging and collaboration platform — a Slack-style chat workspace for teams. This package wraps the upstream `mattermost-team-edition` container image and ships it as a single-click install on StartOS, alongside a co-located PostgreSQL sidecar.
+[Mattermost](https://github.com/mattermost/mattermost) is a team messaging platform. This package bundles the PostgreSQL it needs as a private sidecar, closes public sign-ups by default, and exposes admin recovery through actions rather than a shell.
+
+- **Upstream repo:** <https://github.com/mattermost/mattermost>
+- **Wrapper repo:** <https://github.com/Start9Labs/mattermost-startos>
 
 ---
 
@@ -18,164 +20,187 @@
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-| Property      | Value                                                                         |
-| ------------- | ----------------------------------------------------------------------------- |
-| Mattermost    | `mattermost/mattermost-team-edition` (upstream, unmodified)                   |
-| Database      | `postgres:16-alpine` (upstream, unmodified)                                   |
-| Architectures | x86_64 (upstream `mattermost-team-edition` does not publish arm64)            |
-| Entrypoint    | Image default (`/mattermost/bin/mattermost`); PostgreSQL bound to `127.0.0.1` |
-| Run as        | UID/GID `2000:2000` (the image's `mattermost` user)                           |
+Two upstream images, unmodified.
 
-A short `chown` oneshot runs before PostgreSQL on every start to (re)create the `data`, `config`, `logs`, `plugins`, `client-plugins`, and `run` subdirectories of the `mattermost` volume and align ownership to `2000:2000`, since the Mattermost image is distroless and cannot perform that itself.
+| Property      | Value                                            |
+| ------------- | ------------------------------------------------ |
+| Images        | `mattermost/mattermost-team-edition`, `postgres` |
+| Architectures | **x86_64 only**                                  |
+| Entrypoint    | Each image's own                                 |
 
----
+| Subcontainer       | Purpose                                                          |
+| ------------------ | ---------------------------------------------------------------- |
+| `mattermost-sub`   | The `mattermost` daemon — the one to `attach` to                 |
+| `postgres-sub`     | The private database                                             |
+| `mattermost-chown` | A oneshot that prepares directory ownership before either starts |
+| `mmctl-*`          | Temporary; one per recovery action, running Mattermost's own CLI |
+
+Postgres listens on loopback only, inside the service's own network namespace.
 
 ## Volume and Data Layout
 
-| Volume       | Subpath          | Mount point                  | Purpose                                                                       |
-| ------------ | ---------------- | ---------------------------- | ----------------------------------------------------------------------------- |
-| `main`       | `store.json`     | (host file)                  | StartOS package state (Postgres password, Site URL, SMTP creds, signup flags) |
-| `mattermost` | `data`           | `/mattermost/data`           | File uploads, search indexes, attachments                                     |
-| `mattermost` | `config`         | `/mattermost/config`         | `config.json` and other Mattermost runtime config                             |
-| `mattermost` | `logs`           | `/mattermost/logs`           | Mattermost server logs                                                        |
-| `mattermost` | `plugins`        | `/mattermost/plugins`        | Server-side plugin install directory                                          |
-| `mattermost` | `client-plugins` | `/mattermost/client/plugins` | Client-side (webapp) plugin bundle directory                                  |
-| `mattermost` | `run`            | `/mattermost/run`            | Local-mode Unix socket so StartOS actions can call `mmctl --local`            |
-| `db`         | (root)           | `/var/lib/postgresql`        | PostgreSQL data directory                                                     |
+Three volumes, and one of them never enters a container.
 
----
+| Volume       | Mount Point                             | Purpose                                                                            |
+| ------------ | --------------------------------------- | ---------------------------------------------------------------------------------- |
+| `mattermost` | six subpaths under `/mattermost`        | Uploads, configuration, logs, server and client plugins, and the local-mode socket |
+| `db`         | `/var/lib/postgresql` in `postgres-sub` | The PostgreSQL data directory                                                      |
+| `main`       | — (host side)                           | `store.json`; never mounted into a container                                       |
 
-## Installation and First-Run Flow
+The `mattermost` volume is mounted **as six separate subpaths** rather than at its root, so each of Mattermost's directories lands where the image expects it. The `run` subpath is the important one: it holds the local-mode socket, and it is mounted into the recovery actions' subcontainers too — that shared socket is how they reach the running server.
 
-1. On install, StartOS generates a 24-character random PostgreSQL password and stores it in `store.json` on the `main` volume.
-2. On every start, a `chown` oneshot prepares the `mattermost` volume's subdirectories.
-3. PostgreSQL starts next; the `mmuser` / `mattermost` role and database are created on first run from `POSTGRES_*` env vars.
-4. The Mattermost daemon starts last, applies any database migrations, and listens on `:8065`.
-5. The first user to register through the web UI becomes the System Admin (Mattermost's default behavior).
+The `chown` oneshot creates all six and hands them to the image's user before anything starts, since StartOS mounts volumes root-owned.
 
-No setup wizard is skipped or pre-filled — the only first-run actions are creating a team and an admin account in the web UI.
+## File Models
 
----
+One model, holding what upstream would ask for in its config file or setup wizard.
 
-## Configuration Management
+| File         | Format | Modelled                | Written by                           |
+| ------------ | ------ | ----------------------- | ------------------------------------ |
+| `store.json` | JSON   | Yes — `FileHelper.json` | Install, every init, and the actions |
 
-| StartOS-managed env var                      | Source                                                                            |
-| -------------------------------------------- | --------------------------------------------------------------------------------- |
-| `MM_SQLSETTINGS_DRIVERNAME`                  | Forced to `postgres`                                                              |
-| `MM_SQLSETTINGS_DATASOURCE`                  | Points at the local Postgres sidecar                                              |
-| `MM_SERVICESETTINGS_LISTENADDRESS`           | Forced to `:8065`                                                                 |
-| `MM_PLUGINSETTINGS_ENABLEUPLOADS`            | Forced to `true` so the System Console plugin uploader works                      |
-| `MM_SERVICESETTINGS_ENABLELOCALMODE`         | Forced to `true` so StartOS actions can drive `mmctl --local`                     |
-| `MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION` | Forced to `/mattermost/run/mattermost_local.socket` (shared with action sidecars) |
-| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`           | Forced to `false` (telemetry off by default)                                      |
-| `MM_SERVICESETTINGS_SITEURL`                 | "Set Primary URL" action                                                          |
-| `MM_EMAILSETTINGS_*` (SMTP family)           | "Configure SMTP" action                                                           |
-| `MM_TEAMSETTINGS_ENABLEUSERCREATION`         | "Configure Signups" action                                                        |
-| `MM_TEAMSETTINGS_ENABLEOPENSERVER`           | "Configure Signups" action                                                        |
+| Key                | Set by                                | Notes                                                      |
+| ------------------ | ------------------------------------- | ---------------------------------------------------------- |
+| `postgresPassword` | Install                               | The bundled database's password; also used to take backups |
+| `siteUrl`          | Init, then the Set Primary URL action | The address Mattermost builds links from                   |
+| `smtp`             | The Configure SMTP action             | StartOS's system SMTP, your own server, or disabled        |
+| `signup`           | The Configure Signups action          | Two toggles, both defaulted below                          |
 
-Anything not listed here (channels, teams, integrations, custom branding, plugins, push notification server, etc.) is set through the System Console in Mattermost itself, or by editing `config.json` directly on the `mattermost` volume.
+`siteUrl` is handled by init in two ways. With nothing stored, it picks the `.local` address. With something stored that is **no longer** published, it does not silently replace it — it raises a `critical` task, because that address is embedded in links Mattermost has already sent.
 
-Env vars set by StartOS lock the corresponding field in the System Console — Mattermost intentionally shows them read-only with a "set via env var" indicator. To change one, use the matching StartOS action.
+**No configuration file reaches the application.** Mattermost is configured entirely by environment, and that is where this package's overrides live:
 
----
+| Variable                                               | Value              | Why it differs from leaving Mattermost alone                                               |
+| ------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------ |
+| `MM_TEAMSETTINGS_ENABLEOPENSERVER`                     | `false` at install | A personal server should be invite-only, not self-service                                  |
+| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`                     | `false`            | Nothing phones home                                                                        |
+| `MM_SERVICESETTINGS_ENABLELOCALMODE`                   | `true`             | Local mode is what lets the recovery actions administer the server without a network login |
+| `MM_PLUGINSETTINGS_ENABLEUPLOADS`                      | `true`             | Plugins can be installed, since the marketplace flow is not available here                 |
+| `MM_SQLSETTINGS_*`, `MM_SERVICESETTINGS_LISTENADDRESS` | derived            | Wiring to the bundled database and the published port                                      |
+| `MM_EMAILSETTINGS_*`                                   | derived            | Absent unless SMTP is configured                                                           |
 
-## Network Access and Interfaces
-
-| Interface | Port | Protocol | Purpose                  |
-| --------- | ---- | -------- | ------------------------ |
-| Web UI    | 8065 | HTTP     | Mattermost web interface |
-
-Upstream Mattermost also defines ports `8067`, `8074` and `8075` for metrics / cluster gossip / job server traffic. Those are not exposed by this package — they are only meaningful in a multi-node enterprise deployment.
-
-**Access methods:**
-
-- LAN IP with unique port
-- `<hostname>.local` with unique port
-- Tor `.onion` address
-- Custom domains (if configured)
-
-Use the **Set Primary URL** action to pick which of these is the Site URL Mattermost embeds in emails, OAuth callbacks, push notifications, and mobile deep links.
-
----
-
-## Actions (StartOS UI)
-
-| Action                   | Group    | Effect                                                                                                         |
-| ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
-| Set Primary URL          | —        | Sets `MM_SERVICESETTINGS_SITEURL` from the bound interface's available hostnames. Restart picks up the change. |
-| Configure SMTP           | —        | Sets the `MM_EMAILSETTINGS_*` family so password resets, invitations, and mention notifications go out.        |
-| Configure Signups        | —        | Toggles `MM_TEAMSETTINGS_ENABLEUSERCREATION` and `MM_TEAMSETTINGS_ENABLEOPENSERVER`.                           |
-| Reset User Password      | Recovery | Runs `mmctl --local user change-password` against the running daemon. Returns a generated password.            |
-| Promote to System Admin  | Recovery | Runs `mmctl --local roles system-admin <user>`.                                                                |
-| Demote from System Admin | Recovery | Runs `mmctl --local roles member <user>`.                                                                      |
-
-The three Recovery actions require the daemon to be running; they spin up a temporary sidecar that mounts the `mattermost/run` subpath and talks to the daemon's local-mode Unix socket. No login required.
-
----
-
-## Backups and Restore
-
-**Included in backup:**
-
-- `main` volume (StartOS package state)
-- `mattermost` volume (uploads, config, logs, plugins)
-- PostgreSQL database (captured with `pg_dump`)
-
-**Restore behavior:** All volumes and the PostgreSQL dump are restored before the service starts; Mattermost replays any migrations against the restored database on first launch.
-
----
-
-## Health Checks
-
-| Check         | Method                                            | Messages                                                                       |
-| ------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Database      | `pg_isready` against the PostgreSQL sidecar       | Loading: "Waiting for PostgreSQL to be ready" / Success: "PostgreSQL is ready" |
-| Web Interface | Port listening (`8065`) with a 120 s grace period | Success: "Mattermost is ready" / Error: "Mattermost is not ready"              |
-
----
+`MM_TEAMSETTINGS_ENABLEUSERCREATION` is a second, broader switch, left on by default: turning it off freezes the member list entirely, blocking even invitations.
 
 ## Dependencies
 
-None.
+None. PostgreSQL is bundled as a private sidecar rather than declared as a dependency, so it is not shared with any other service.
 
----
+## Network Access and Interfaces
+
+One interface, serving the web client and Mattermost's API — which is also what the mobile and desktop apps use.
+
+| Interface | Id   | Type | Port | Description                  |
+| --------- | ---- | ---- | ---- | ---------------------------- |
+| Web UI    | `ui` | ui   | 8065 | The Mattermost web interface |
+
+The port is bound on the `ui-multi` MultiHost and is not masked.
+
+## Installation and First-Run Flow
+
+Install generates the database password and picks a site URL from the addresses published for the interface, preferring the `.local` one. No task is raised on a fresh install and no credential is shown: **the first account created in the web UI becomes the System Admin**, regardless of the sign-up settings.
+
+Two things are worth doing before inviting anyone:
+
+- **Set the site URL to the address people will actually use.** Mattermost builds email links, OAuth callbacks, push-notification payloads, and mobile deep links from it, so changing it later leaves already-sent links pointing at the old one.
+- **Configure SMTP**, without which invitations and password resets cannot be sent — and without which the only route back into a locked-out account is the recovery actions here.
+
+## Actions
+
+Six actions, in two groups.
+
+### Set Primary URL
+
+Chooses which published address Mattermost treats as its site URL.
+
+- **What it changes:** `siteUrl` in `store.json`.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent, but not consequence-free once in use — links already sent keep the old address, and mobile clients configured against it need updating.
+- **Input:** a dropdown of the interface's non-local addresses.
+
+### Configure SMTP
+
+Sets up outbound email for invitations, password resets, and mention notifications.
+
+- **What it changes:** `smtp` in `store.json`; the credentials become Mattermost's email environment on the next start.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent; the form is pre-filled.
+
+### Configure Signups
+
+Two switches: whether accounts can be created at all, and whether sign-up is public.
+
+- **What it changes:** `signup` in `store.json`.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent, and existing accounts are unaffected.
+- **The distinction matters.** Public sign-ups off means invite-only — people still join by invitation. Account creation off means nobody new can join at all, including by invitation.
+
+### Recovery — Reset User Password, Promote to System Admin, Demote from System Admin
+
+Three actions grouped under Recovery, each taking a username or email and each **only available while the service is running**, because they reach Mattermost through its local-mode socket rather than over the network.
+
+- **Reset User Password** generates a new password for one account and shows it once. Use it when an admin is locked out and SMTP-based recovery is unavailable.
+- **Promote to System Admin** elevates an existing account — the way back in when the original admin has left.
+- **Demote from System Admin** reverses that.
+
+None of the three requires being logged in, which is the point: they work when the web interface does not.
+
+## Tasks
+
+One task, and it cannot appear on a fresh install.
+
+| Task            | Severity   | Raised when                                                 | Cleared when    |
+| --------------- | ---------- | ----------------------------------------------------------- | --------------- |
+| Set Primary URL | `critical` | A site URL was set, and that address is no longer published | The action runs |
+
+Init picks an address when none is stored, so this fires only when one that was in use goes away. `critical` because a wrong site URL breaks email links, mobile clients, and OAuth callbacks in ways that are not obvious from inside the app.
+
+## Health Checks
+
+Two checks, one per daemon.
+
+| Check        | Displayed       | Method                 | Grace |
+| ------------ | --------------- | ---------------------- | ----- |
+| `postgres`   | "Database"      | `pg_isready`           | —     |
+| `mattermost` | "Web Interface" | Port 8065 is listening | 2 min |
+
+**The two-minute grace covers a first start**, where the database is initialised and Mattermost runs its schema migrations before binding. `postgres` reports `loading` rather than failing while it comes up, so a slow first start looks like progress rather than a fault.
+
+A `mattermost` failure after that points at the application — most often a configuration value it rejects, which it names in the service logs.
+
+## Backups and Restore
+
+Mixed, and the distinction decides what a restore gives you.
+
+- **`db` is dumped, not copied.** `Backups.withPgDump` takes a logical dump of the Mattermost database, authenticating with the password from `store.json`. The volume's files are never captured; a restore replays the dump into a fresh database.
+- **`mattermost` and `main` are copied wholesale** — uploads, configuration, plugins, and `store.json` with the database password, site URL, and SMTP settings.
+
+The two halves are not independent: the dump is taken with a credential that lives in `store.json`, so a backup missing that file could not be restored.
+
+**Restore is complete** — messages, channels, accounts, and uploaded files all return. If the restored server does not publish the site URL the backup recorded, the task above asks you to choose a new one.
 
 ## Limitations and Differences
 
-1. **Team Edition only** — this package ships the open source `mattermost-team-edition` image. Enterprise-only features (LDAP/SAML SSO, compliance exports, high availability, etc.) are not available.
-2. **Single-node deployment** — there is no cluster gossip, metrics, or job-server port published. Mattermost runs as one process on one StartOS device.
-3. **Local PostgreSQL only** — the package is wired to its own bundled PostgreSQL sidecar, listening on `127.0.0.1`. Pointing Mattermost at an external database is not supported.
-4. **Distroless image** — the Mattermost container has no shell, so admin operations from inside the container must use `mmctl --local` (the upstream way), not `docker exec sh`.
-
----
-
-## What Is Unchanged from Upstream
-
-- The Mattermost server binary, all bundled plugins, and the web client are exactly as published in `mattermost/mattermost-team-edition`.
-- The default PostgreSQL schema, migrations, and `mmctl` behavior are unchanged.
-- All Mattermost System Console settings (apart from those listed under **StartOS-managed** above) behave as documented upstream.
-
----
-
-## Contributing
-
-Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
+1. **x86_64 only.** There is no aarch64 or riscv64 build of this package.
+2. **PostgreSQL is a private sidecar.** It cannot be shared with another service or replaced with an external database.
+3. **Public sign-ups are off at install.** The server is invite-only until you change it; the first account is System Admin regardless.
+4. **Telemetry is disabled.**
+5. **Local mode is enabled**, which is what makes the recovery actions work without a login. It is reachable only through a socket inside the service.
+6. **Changing the site URL restarts the service**, and does not retroactively fix links already sent.
 
 ---
 
@@ -183,36 +208,56 @@ Build and development workflow follow the StartOS packaging guide: <https://docs
 
 ```yaml
 package_id: mattermost
-architectures: [x86_64]
+image: mattermost/mattermost-team-edition # plus postgres
+architectures:
+  - x86_64
+subcontainers:
+  - mattermost-sub # the application; the one to attach to
+  - postgres-sub # private database
+  - mattermost-chown # oneshot; directory ownership
+  - mmctl-reset-password # temporary; recovery actions (also -promote, -demote)
 volumes:
-  main: (StartOS state — store.json)
-  mattermost/data: /mattermost/data
-  mattermost/config: /mattermost/config
-  mattermost/logs: /mattermost/logs
-  mattermost/plugins: /mattermost/plugins
-  mattermost/client-plugins: /mattermost/client/plugins
-  mattermost/run: /mattermost/run # mmctl --local socket
-  db: /var/lib/postgresql
-ports:
-  ui: 8065
-dependencies: none
+  mattermost: six subpaths under /mattermost (data, config, logs, plugins, client-plugins, run)
+  db: /var/lib/postgresql (in postgres-sub)
+  main: host side (store.json)
+file_models:
+  - store.json
 startos_managed_env_vars:
   - MM_SQLSETTINGS_DRIVERNAME
   - MM_SQLSETTINGS_DATASOURCE
   - MM_SERVICESETTINGS_LISTENADDRESS
-  - MM_PLUGINSETTINGS_ENABLEUPLOADS
   - MM_SERVICESETTINGS_ENABLELOCALMODE
   - MM_SERVICESETTINGS_LOCALMODESOCKETLOCATION
+  - MM_SERVICESETTINGS_SITEURL
+  - MM_PLUGINSETTINGS_ENABLEUPLOADS
   - MM_LOGSETTINGS_ENABLEDIAGNOSTICS
-  - MM_SERVICESETTINGS_SITEURL # via Set Primary URL action
-  - MM_EMAILSETTINGS_* # via Configure SMTP action
-  - MM_TEAMSETTINGS_ENABLEUSERCREATION # via Configure Signups action
-  - MM_TEAMSETTINGS_ENABLEOPENSERVER # via Configure Signups action
+  - MM_TEAMSETTINGS_ENABLEUSERCREATION
+  - MM_TEAMSETTINGS_ENABLEOPENSERVER
+  - MM_EMAILSETTINGS_SENDEMAILNOTIFICATIONS # when SMTP is configured
+  - MM_EMAILSETTINGS_ENABLESMTPAUTH # when SMTP is configured
+  - MM_EMAILSETTINGS_SMTPSERVER # when SMTP is configured
+  - MM_EMAILSETTINGS_SMTPPORT # when SMTP is configured
+  - MM_EMAILSETTINGS_SMTPUSERNAME # when SMTP is configured
+  - MM_EMAILSETTINGS_SMTPPASSWORD # when SMTP is configured
+  - MM_EMAILSETTINGS_FEEDBACKEMAIL # when SMTP is configured
+  - MM_EMAILSETTINGS_FEEDBACKNAME # when SMTP is configured
+  - MM_EMAILSETTINGS_CONNECTIONSECURITY # when SMTP is configured
+  - POSTGRES_USER # postgres-sub
+  - POSTGRES_PASSWORD # postgres-sub
+  - POSTGRES_DB # postgres-sub
+dependencies: []
+interfaces:
+  ui: { type: ui, port: 8065 }
 actions:
   - set-primary-url
   - manage-smtp
   - manage-signup
-  - reset-user-password
-  - promote-to-admin
-  - demote-from-admin
+  - reset-user-password # only-running
+  - promote-to-admin # only-running
+  - demote-from-admin # only-running
+tasks:
+  - { action: set-primary-url, severity: critical }
+health_checks:
+  - postgres # displayed "Database"
+  - mattermost # displayed "Web Interface"
 ```
