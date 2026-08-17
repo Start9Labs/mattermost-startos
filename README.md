@@ -68,11 +68,12 @@ The `chown` oneshot creates all six and hands them to the image's user before an
 
 ## File Models
 
-One model, holding what upstream would ask for in its config file or setup wizard.
+Two models: this package's own state, and a two-key window onto Mattermost's config file.
 
-| File         | Format | Modelled                | Written by                           |
-| ------------ | ------ | ----------------------- | ------------------------------------ |
-| `store.json` | JSON   | Yes — `FileHelper.json` | Install, every init, and the actions |
+| File                 | Format | Modelled                | Written by                                     |
+| -------------------- | ------ | ----------------------- | ---------------------------------------------- |
+| `store.json`         | JSON   | Yes — `FileHelper.json` | Install, every init, and the actions           |
+| `config/config.json` | JSON   | Two keys only           | Every start, only while relaying is configured |
 
 | Key                | Set by                                | Notes                                                      |
 | ------------------ | ------------------------------------- | ---------------------------------------------------------- |
@@ -80,10 +81,13 @@ One model, holding what upstream would ask for in its config file or setup wizar
 | `siteUrl`          | Init, then the Set Primary URL action | The address Mattermost builds links from                   |
 | `smtp`             | The Configure SMTP action             | StartOS's system SMTP, your own server, or disabled        |
 | `signup`           | The Configure Signups action          | Two toggles, both defaulted below                          |
+| `callsTurn`        | The Configure Call Relay action       | Whether the Calls plugin relays through Coturn             |
 
 `siteUrl` is handled by init in two ways. With nothing stored, it picks the `.local` address. With something stored that is **no longer** published, it does not silently replace it — it raises a `critical` task, because that address is embedded in links Mattermost has already sent.
 
-**No configuration file reaches the application.** Mattermost is configured entirely by environment, and that is where this package's overrides live:
+**`config.json` is Mattermost's own file, and the model is a two-key window onto it.** The only keys modelled are `ICEServersConfigs` and `TURNStaticAuthSecret` under the Calls plugin's `com.mattermost.calls` entry; everything else in the file — the whole of Mattermost's configuration and every other plugin's settings — passes through untouched, because the SDK's `z.object` preserves unknown keys at every level and `merge` writes only the keys it is handed. It is written on start **only** when there is something to write or something of ours to clear, so a server that never turned relaying on never gets an entry for a plugin it may not have installed. Turning relaying off removes both keys but leaves the now-empty `com.mattermost.calls` object behind — `merge` created the path and only the keys it was given are removed. Harmless, and Mattermost reads it as no settings at all. Mattermost writes this file itself on its first start; until it exists the package skips the merge rather than racing the image's entrypoint with a partial file.
+
+**Everything else is configured by environment**, and that is where this package's overrides live:
 
 | Variable                                               | Value              | Why it differs from leaving Mattermost alone                                               |
 | ------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------ |
@@ -98,7 +102,15 @@ One model, holding what upstream would ask for in its config file or setup wizar
 
 ## Dependencies
 
-None. PostgreSQL is bundled as a private sidecar rather than declared as a dependency, so it is not shared with any other service.
+One, optional, and only while it is selected. PostgreSQL is bundled as a private sidecar rather than declared as a dependency, so it is not shared with any other service.
+
+| Dependency | Kind      | Health checks | Required                                               |
+| ---------- | --------- | ------------- | ------------------------------------------------------ |
+| `coturn`   | `running` | **none**      | Only while call relaying is on in Configure Call Relay |
+
+**No health check is declared, deliberately.** Coturn's own `TURN Server` check fails until you attach a public domain to it, and naming it here would leave Mattermost showing a permanently unmet dependency even though Calls works fine without a relay. Coturn's own check already says what is missing.
+
+The shared secret is read through a throwaway `coturn-secret-read` container that mounts only Coturn's `shared` subpath read-only — so a missing or broken Coturn can never take Mattermost's own daemons down, and the rest of Coturn's volume stays out of view.
 
 ## Network Access and Interfaces
 
@@ -148,6 +160,20 @@ Two switches: whether accounts can be created at all, and whether sign-up is pub
 - **Cost:** seconds, then a restart.
 - **Repeat safety:** idempotent, and existing accounts are unaffected.
 - **The distinction matters.** Public sign-ups off means invite-only — people still join by invitation. Account creation off means nobody new can join at all, including by invitation.
+
+### Configure Call Relay
+
+One toggle: whether Mattermost Calls relays through the Coturn service.
+
+- **What it changes:** `callsTurn` in `store.json`; through it the package's Coturn dependency, and the Calls plugin's `ICEServersConfigs` and `TURNStaticAuthSecret` in `config.json`, which every start reconciles.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent — the settings are derived from Coturn's published addresses and rewritten from scratch each start.
+
+**Coturn authenticates with the TURN REST API shared-secret scheme, which is what makes this work.** It runs `use-auth-secret` with no long-term accounts, so no username or password can be written into the ICE server list; the plugin is handed the shared secret in `TURNStaticAuthSecret` and mints a short-lived credential pair per `turn:` URL itself. The ICE server entry therefore carries only `urls` — the `stun:` and `turn:` addresses on Coturn's plain port, plus `turns:` on the edge-terminated TLS port.
+
+**Relaying is configured only once Coturn has a public domain.** With the toggle on but Coturn lacking one — or with its secret unreadable — the settings are _cleared_ rather than left behind, since an ICE server list pointing at an unreachable relay is worse than none. Nothing reports that as an error; Calls falls back to direct connections.
+
+**While the toggle is on, this package owns Calls' ICE Servers Configurations field** and rewrites it on every start, so a value typed into the System Console will not survive. To point Calls at a different TURN server, leave the toggle off and configure it there instead.
 
 ### Recovery — Reset User Password, Promote to System Admin, Demote from System Admin
 
@@ -201,6 +227,8 @@ The two halves are not independent: the dump is taken with a credential that liv
 4. **Telemetry is disabled.**
 5. **Local mode is enabled**, which is what makes the recovery actions work without a login. It is reachable only through a socket inside the service.
 6. **Changing the site URL restarts the service**, and does not retroactively fix links already sent.
+7. **The Calls plugin is not shipped and there is no marketplace here.** Call relaying configures a plugin you install yourself, by uploading its release bundle under Plugin Management; the settings are written whether or not it is present, and take effect once it is.
+8. **Call relaying is Coturn or nothing.** There is no field for an external TURN server — configure one in the System Console instead, and leave the toggle off.
 
 ---
 
@@ -216,12 +244,14 @@ subcontainers:
   - postgres-sub # private database
   - mattermost-chown # oneshot; directory ownership
   - mmctl-reset-password # temporary; recovery actions (also -promote, -demote)
+  - coturn-secret-read # temporary; reads Coturn's shared secret
 volumes:
   mattermost: six subpaths under /mattermost (data, config, logs, plugins, client-plugins, run)
   db: /var/lib/postgresql (in postgres-sub)
   main: host side (store.json)
 file_models:
   - store.json
+  - /mattermost/config/config.json # two Calls plugin keys only; the rest passes through
 startos_managed_env_vars:
   - MM_SQLSETTINGS_DRIVERNAME
   - MM_SQLSETTINGS_DATASOURCE
@@ -245,13 +275,15 @@ startos_managed_env_vars:
   - POSTGRES_USER # postgres-sub
   - POSTGRES_PASSWORD # postgres-sub
   - POSTGRES_DB # postgres-sub
-dependencies: []
+dependencies:
+  - coturn # optional, running, no health checks; only while call relaying is on
 interfaces:
   ui: { type: ui, port: 8065 }
 actions:
   - set-primary-url
   - manage-smtp
   - manage-signup
+  - manage-calls-turn
   - reset-user-password # only-running
   - promote-to-admin # only-running
   - demote-from-admin # only-running

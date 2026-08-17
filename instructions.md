@@ -37,6 +37,20 @@ The Web UI is the full Mattermost experience: chat, channels, direct messages, f
 
 The System Console's **Plugin Management** page lets you upload and enable Mattermost plugins. Uploaded server plugins live under the `plugins` subpath of the `mattermost` volume; their client bundles under `client-plugins`. Both are included in StartOS backups.
 
+### Calls that won't connect
+
+Mattermost Calls sends audio and video directly between participants, which fails when someone is behind NAT or a strict firewall — the call rings, then stays silent or drops. The **Configure Call Relay** action gives those calls a relay to fall back on.
+
+Three things have to be in place:
+
+1. **Install the Calls plugin.** It is not bundled, and the plugin marketplace is not available here — download the release bundle from <https://github.com/mattermost/mattermost-plugin-calls/releases> and upload it under **System Console → Plugin Management**.
+2. **Install the separate Coturn service** from the StartOS marketplace, start it, and give it a public domain of its own, as its own instructions describe.
+3. **Run Configure Call Relay** and turn the toggle on.
+
+Until all three are done, calls still work wherever a direct connection is possible, and nothing reports the missing relay as an error.
+
+StartOS is what tells the Calls plugin where the relay is, so leave **ICE Servers Configurations** and **TURN Static Auth Secret** alone in the System Console — while the toggle is on they are rewritten on every start, and anything typed there is replaced. Turning the toggle off clears both again. If you would rather use a TURN server that isn't Coturn, leave the toggle off and fill those fields in yourself.
+
 ### Editing config.json directly
 
-Most settings are reachable through the System Console, but if you ever need to edit `config.json` by hand, it lives on the `mattermost` volume under the `config` subpath. Restart Mattermost from the StartOS Dashboard after editing.
+Most settings are reachable through the System Console, but if you ever need to edit `config.json` by hand, it lives on the `mattermost` volume under the `config` subpath. Restart Mattermost from the StartOS Dashboard after editing. The one exception is the two Calls relay settings above: while **Configure Call Relay** is on, StartOS owns them and a hand edit will not survive a restart.

@@ -8,6 +8,19 @@ export const short = {
     'Plateforme open source de collaboration et de messagerie pour les équipes',
 }
 
+export const coturnDescription = {
+  en_US:
+    'Provides a TURN/STUN relay so calls connect through NAT and restrictive firewalls',
+  es_ES:
+    'Proporciona un relé TURN/STUN para que las llamadas se establezcan a través de NAT y cortafuegos restrictivos',
+  de_DE:
+    'Stellt ein TURN/STUN-Relay bereit, damit Anrufe durch NAT und restriktive Firewalls zustande kommen',
+  pl_PL:
+    'Udostępnia przekaźnik TURN/STUN, dzięki któremu połączenia zestawiają się przez NAT i restrykcyjne zapory',
+  fr_FR:
+    'Fournit un relais TURN/STUN pour que les appels aboutissent à travers le NAT et les pare-feu restrictifs',
+}
+
 export const long = {
   en_US:
     'Mattermost is a self-hosted, open source messaging and collaboration platform — a Slack-style chat workspace for teams. Organize conversations in channels, share files, run polls, integrate with developer tools, and keep every message and uploaded file on your own server.',

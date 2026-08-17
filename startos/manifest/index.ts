@@ -1,5 +1,5 @@
 import { setupManifest } from '@start9labs/start-sdk'
-import { long, short } from './i18n'
+import { coturnDescription, long, short } from './i18n'
 
 export const manifest = setupManifest({
   id: 'mattermost',
@@ -25,5 +25,14 @@ export const manifest = setupManifest({
       arch: ['x86_64'],
     },
   },
-  dependencies: {},
+  dependencies: {
+    coturn: {
+      description: coturnDescription,
+      optional: true,
+      metadata: {
+        title: 'Coturn',
+        icon: 'https://raw.githubusercontent.com/Start9Labs/coturn-startos/d67ecaca5800a87e3300ce44c62484888f35d51b/icon.svg',
+      },
+    },
+  },
 })
