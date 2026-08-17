@@ -8,7 +8,6 @@ export const manifest = setupManifest({
   packageRepo: 'https://github.com/Start9Labs/mattermost-startos',
   upstreamRepo: 'https://github.com/mattermost/mattermost',
   marketingUrl: 'https://mattermost.com/',
-  docsUrls: ['https://docs.mattermost.com/'],
   donationUrl: null,
   description: { short, long },
   volumes: ['main', 'mattermost', 'db'],
