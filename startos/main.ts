@@ -1,4 +1,5 @@
 import { T } from '@start9labs/start-sdk'
+import { CALLS_PLUGIN_ID, configJson } from './fileModels/config.json'
 import { storeJson } from './fileModels/store.json'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
@@ -11,6 +12,7 @@ import {
   MM_LOCAL_SOCKET,
   postgresDb,
   postgresUser,
+  resolveCallsTurn,
   uiPort,
 } from './utils'
 
@@ -21,7 +23,37 @@ export const main = sdk.setupMain(async ({ effects }) => {
   if (!store) {
     throw new Error(i18n('store.json not found'))
   }
-  const { postgresPassword = '', siteUrl, smtp, signup } = store
+  const { postgresPassword = '', siteUrl, smtp, signup, callsTurn } = store
+
+  // Point the Calls plugin at Coturn, or clear what we put there. Resolves to
+  // null when relaying is off, when Coturn has no public domain yet, or when
+  // its secret can't be read — in each of those a stale ICE server list would
+  // be worse than none, so it is removed rather than left behind.
+  const turn = callsTurn ? await resolveCallsTurn(effects) : null
+  // Mattermost writes config.json on its own first start. Until it exists there
+  // is nothing to merge into, and creating a partial one here would race that
+  // entrypoint — so skip, and apply on the next start instead.
+  const config = await configJson.read().once()
+  const calls = config?.PluginSettings?.Plugins?.[CALLS_PLUGIN_ID]
+  // With nothing wanted and nothing of ours present, don't write at all: a
+  // Mattermost that never turned relaying on gets no settings entry for a
+  // plugin it may not even have installed.
+  const present =
+    calls?.ICEServersConfigs != null || calls?.TURNStaticAuthSecret != null
+  if (config && (turn || present)) {
+    await configJson.merge(effects, {
+      PluginSettings: {
+        Plugins: {
+          [CALLS_PLUGIN_ID]: {
+            ICEServersConfigs: turn
+              ? JSON.stringify(turn.iceServers)
+              : undefined,
+            TURNStaticAuthSecret: turn?.secret,
+          },
+        },
+      },
+    })
+  }
 
   let smtpCredentials: T.SmtpValue | null = null
   if (smtp.selection === 'system') {

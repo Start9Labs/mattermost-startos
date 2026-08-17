@@ -35,6 +35,12 @@ const dict = {
   'Configure Signups': 20,
   'Control whether new accounts can be created at all, and whether sign-up is public or invite-only.': 21,
 
+  // actions/manageCallsTurn.ts
+  'Relay Calls Through Coturn': 41,
+  'Relay Mattermost Calls through the Coturn service so they connect when a participant is behind NAT or a restrictive firewall. Requires the Calls plugin to be installed in Mattermost, and Coturn to be installed and running with a public domain of its own; until both are, calls fall back to a direct connection.': 42,
+  'Configure Call Relay': 43,
+  "Hand the Calls plugin the Coturn service's address and shared secret, so calls that cannot connect directly are relayed.": 44,
+
   // actions/resetUserPassword.ts
   'Username or Email': 22,
   'The username or email address of the account whose password you want to reset.': 23,

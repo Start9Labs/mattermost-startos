@@ -43,6 +43,10 @@ export default {
     38: 'Revoca los privilegios de System Admin de un usuario, devolviéndolo al estado de miembro regular.',
     39: 'Degradado',
     40: '${user} ya no es System Admin.',
+    41: 'Retransmitir las llamadas a través de Coturn',
+    42: 'Retransmita las llamadas de Mattermost a través del servicio Coturn para que se establezcan cuando un participante está detrás de NAT o de un cortafuegos restrictivo. Requiere que el complemento Calls esté instalado en Mattermost y que Coturn esté instalado y en ejecución con su propio dominio público; hasta que ambos lo estén, las llamadas recurren a una conexión directa.',
+    43: 'Configurar la retransmisión de llamadas',
+    44: 'Entregue al complemento Calls la dirección y el secreto compartido del servicio Coturn, para que las llamadas que no puedan conectarse directamente se retransmitan.',
   },
   de_DE: {
     0: 'Starte Mattermost!',
@@ -86,6 +90,10 @@ export default {
     38: 'Entzieht einem Benutzer die System-Admin-Rechte und gibt ihm den Status eines regulären Mitglieds zurück.',
     39: 'Herabgestuft',
     40: '${user} ist nicht mehr System-Admin.',
+    41: 'Anrufe über Coturn weiterleiten',
+    42: 'Mattermost-Anrufe über den Coturn-Dienst weiterleiten, damit sie auch zustande kommen, wenn ein Teilnehmer hinter NAT oder einer restriktiven Firewall sitzt. Erfordert, dass das Calls-Plugin in Mattermost installiert ist und dass Coturn installiert ist, läuft und eine eigene öffentliche Domain hat; bis beides zutrifft, fallen Anrufe auf eine Direktverbindung zurück.',
+    43: 'Anrufweiterleitung konfigurieren',
+    44: 'Übergibt dem Calls-Plugin die Adresse und das gemeinsame Geheimnis des Coturn-Dienstes, damit Anrufe weitergeleitet werden, die sich nicht direkt verbinden können.',
   },
   pl_PL: {
     0: 'Uruchamianie Mattermost!',
@@ -129,6 +137,10 @@ export default {
     38: 'Odbiera uprawnienia System Admin użytkownikowi, przywracając go do statusu zwykłego członka.',
     39: 'Zdegradowany',
     40: '${user} nie jest już System Admin.',
+    41: 'Przekazuj połączenia przez Coturn',
+    42: 'Przekazuj połączenia Mattermost przez usługę Coturn, aby zestawiały się, gdy uczestnik jest za NAT-em lub restrykcyjną zaporą. Wymaga zainstalowanej w Mattermost wtyczki Calls oraz zainstalowanego i uruchomionego Coturn z własną domeną publiczną; dopóki nie ma obu, połączenia wracają do trybu bezpośredniego.',
+    43: 'Konfiguruj przekazywanie połączeń',
+    44: 'Przekazuje wtyczce Calls adres i współdzielony sekret usługi Coturn, aby połączenia, które nie mogą zestawić się bezpośrednio, były przekazywane.',
   },
   fr_FR: {
     0: 'Démarrage de Mattermost !',
@@ -172,5 +184,9 @@ export default {
     38: "Révoque les privilèges de System Admin d'un utilisateur, le ramenant au statut de membre régulier.",
     39: 'Rétrogradé',
     40: "${user} n'est plus System Admin.",
+    41: 'Relayer les appels via Coturn',
+    42: "Relayer les appels Mattermost via le service Coturn pour qu'ils aboutissent lorsqu'un participant est derrière un NAT ou un pare-feu restrictif. Nécessite que le plugin Calls soit installé dans Mattermost et que Coturn soit installé et démarré avec un domaine public qui lui est propre ; tant que ce n'est pas le cas, les appels se rabattent sur une connexion directe.",
+    43: 'Configurer le relais des appels',
+    44: "Transmet au plugin Calls l'adresse et le secret partagé du service Coturn, afin que les appels qui ne peuvent pas se connecter directement soient relayés.",
   },
 } satisfies Record<string, LangDict>
