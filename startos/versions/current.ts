@@ -1,13 +1,48 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '11.10.0:1',
+  version: '11.10.1:0',
   releaseNotes: {
-    en_US: `New optional dependency on **Coturn** relays Mattermost Calls through NAT and restrictive firewalls, so a call connects even when a participant is behind one. Turn it on with the **Configure Call Relay** action; it needs the Calls plugin installed in Mattermost and Coturn running with a public domain of its own. While it is on, this package owns Calls' ICE Servers Configurations field — turning it off clears it again.`,
-    es_ES: `La nueva dependencia opcional de **Coturn** retransmite las llamadas de Mattermost a través de NAT y de cortafuegos restrictivos, de modo que una llamada se establece incluso cuando un participante está detrás de uno. Actívela con la acción **Configurar la retransmisión de llamadas**; requiere el complemento Calls instalado en Mattermost y Coturn en ejecución con su propio dominio público. Mientras esté activada, este paquete es el dueño del campo «ICE Servers Configurations» de Calls; al desactivarla, vuelve a vaciarse.`,
-    de_DE: `Die neue optionale Abhängigkeit **Coturn** leitet Mattermost-Anrufe durch NAT und restriktive Firewalls, sodass ein Anruf auch dann zustande kommt, wenn ein Teilnehmer dahinter sitzt. Einschalten mit der Aktion **Anrufweiterleitung konfigurieren**; erforderlich sind das in Mattermost installierte Calls-Plugin und ein laufendes Coturn mit eigener öffentlicher Domain. Solange sie aktiv ist, gehört das Feld „ICE Servers Configurations“ von Calls diesem Paket; beim Ausschalten wird es wieder geleert.`,
-    pl_PL: `Nowa opcjonalna zależność **Coturn** przekazuje połączenia Mattermost przez NAT i restrykcyjne zapory, dzięki czemu połączenie zestawia się nawet wtedy, gdy uczestnik jest za nimi. Włącz ją akcją **Konfiguruj przekazywanie połączeń**; wymaga zainstalowanej w Mattermost wtyczki Calls oraz działającego Coturn z własną domeną publiczną. Dopóki jest włączona, ten pakiet jest właścicielem pola „ICE Servers Configurations” wtyczki Calls; wyłączenie jej czyści to pole.`,
-    fr_FR: `La nouvelle dépendance optionnelle **Coturn** relaie les appels Mattermost à travers le NAT et les pare-feu restrictifs, de sorte qu'un appel aboutit même lorsqu'un participant se trouve derrière l'un d'eux. Activez-la avec l'action **Configurer le relais des appels** ; elle nécessite le plugin Calls installé dans Mattermost et un Coturn démarré avec un domaine public qui lui est propre. Tant qu'elle est active, ce paquet est propriétaire du champ « ICE Servers Configurations » de Calls ; la désactiver le vide à nouveau.`,
+    en_US: `Updated Mattermost to 11.10.1, a patch release with bug fixes.
+
+- Tightens permission handling around team and channel membership, team invitations, team search filters, and account type switching.
+- Tightens sanitization of the post and thread payloads the API returns, and restricts flagging a post in direct and group messages.
+- Limits the size of an image the built-in image proxy fetches directly.
+- Restores the collapse toggle on a single video attachment.
+
+Full release notes: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html`,
+    es_ES: `Actualiza Mattermost a 11.10.1, una versión de corrección con arreglos de errores.
+
+- Refuerza la gestión de permisos en la pertenencia a equipos y canales, las invitaciones a equipos, los filtros de búsqueda de equipos y el cambio de tipo de cuenta.
+- Refuerza el saneamiento de los datos de publicaciones e hilos que devuelve la API y restringe el marcado de publicaciones en mensajes directos y de grupo.
+- Limita el tamaño de las imágenes que el proxy de imágenes integrado descarga directamente.
+- Restaura el botón de contraer en los adjuntos de vídeo individuales.
+
+Notas de la versión completas: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html`,
+    de_DE: `Aktualisiert Mattermost auf 11.10.1, ein Patch-Release mit Fehlerbehebungen.
+
+- Verschärft die Rechteprüfung bei Team- und Kanalmitgliedschaften, Team-Einladungen, Team-Suchfiltern und beim Wechsel des Kontotyps.
+- Verschärft die Bereinigung der von der API gelieferten Beitrags- und Thread-Daten und schränkt das Markieren von Beiträgen in Direkt- und Gruppennachrichten ein.
+- Begrenzt die Größe eines Bildes, das der eingebaute Bild-Proxy direkt abruft.
+- Stellt den Einklappen-Schalter bei einzelnen Video-Anhängen wieder her.
+
+Vollständige Versionshinweise: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html`,
+    pl_PL: `Aktualizuje Mattermost do 11.10.1, wydanie poprawkowe z poprawkami błędów.
+
+- Zaostrza kontrolę uprawnień przy członkostwie w zespołach i kanałach, zaproszeniach do zespołów, filtrach wyszukiwania zespołów oraz zmianie typu konta.
+- Zaostrza oczyszczanie danych postów i wątków zwracanych przez API oraz ogranicza oznaczanie postów w wiadomościach bezpośrednich i grupowych.
+- Ogranicza rozmiar obrazu pobieranego bezpośrednio przez wbudowane proxy obrazów.
+- Przywraca przycisk zwijania przy pojedynczym załączniku wideo.
+
+Pełne informacje o wydaniu: https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html`,
+    fr_FR: `Met à jour Mattermost vers 11.10.1, une version corrective avec des corrections de bugs.
+
+- Renforce la gestion des permissions pour l'appartenance aux équipes et aux canaux, les invitations d'équipe, les filtres de recherche d'équipe et le changement de type de compte.
+- Renforce l'assainissement des données de publications et de fils renvoyées par l'API et restreint le marquage d'une publication dans les messages directs et de groupe.
+- Limite la taille d'une image que le proxy d'images intégré récupère directement.
+- Rétablit le bouton de repli sur une pièce jointe vidéo unique.
+
+Notes de version complètes : https://docs.mattermost.com/product-overview/mattermost-v11-changelog.html`,
   },
   migrations: {
     up: async ({ effects }) => {},
