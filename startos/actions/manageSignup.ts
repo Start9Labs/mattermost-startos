@@ -16,7 +16,7 @@ export const inputSpec = InputSpec.of({
     name: i18n('Public Signups'),
     default: false,
     description: i18n(
-      'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled (recommended), the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.',
+      'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled, the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.',
     ),
   }),
 })
