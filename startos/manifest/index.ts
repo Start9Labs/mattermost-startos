@@ -1,5 +1,5 @@
 import { setupManifest } from '@start9labs/start-sdk'
-import { coturnDescription, long, short } from './i18n'
+import { long, short } from './i18n'
 
 export const manifest = setupManifest({
   id: 'mattermost',
@@ -17,22 +17,14 @@ export const manifest = setupManifest({
         dockerTag: 'mattermost/mattermost-team-edition:11.11.1',
       },
       arch: ['x86_64'],
+      emulateMissing: false,
     },
     postgres: {
       source: {
         dockerTag: 'postgres:16-alpine',
       },
       arch: ['x86_64'],
-    },
-  },
-  dependencies: {
-    coturn: {
-      description: coturnDescription,
-      optional: true,
-      metadata: {
-        title: 'Coturn',
-        icon: 'https://raw.githubusercontent.com/Start9Labs/coturn-startos/d67ecaca5800a87e3300ce44c62484888f35d51b/icon.svg',
-      },
+      emulateMissing: false,
     },
   },
 })

@@ -83,9 +83,9 @@ Two models: this package's own state, and a two-key window onto Mattermost's con
 | `signup`           | The Configure Signups action          | Two toggles, both defaulted below                          |
 | `callsTurn`        | The Configure Call Relay action       | Whether the Calls plugin relays through Coturn             |
 
-`siteUrl` is handled by init in two ways. With nothing stored, it picks the `.local` address. With something stored that is **no longer** published, it does not silently replace it — it raises a `critical` task, because that address is embedded in links Mattermost has already sent.
+`siteUrl` is handled by init in two ways. With nothing stored, it stores a public-domain address (preferring HTTPS), then a `.local` address, then the first address, according to availability. With something stored whose hostname is **no longer** one of the interface's addresses, it leaves the stored value alone and raises a `critical` task, because that address is embedded in links Mattermost has already sent. A stored hostname that is still published at a different port or scheme is followed to it.
 
-**`config.json` is Mattermost's own file, and the model is a two-key window onto it.** The only keys modelled are `ICEServersConfigs` and `TURNStaticAuthSecret` under the Calls plugin's `com.mattermost.calls` entry; everything else in the file — the whole of Mattermost's configuration and every other plugin's settings — passes through untouched, because the SDK's `z.object` preserves unknown keys at every level and `merge` writes only the keys it is handed. It is written on start **only** when there is something to write or something of ours to clear, so a server that never turned relaying on never gets an entry for a plugin it may not have installed. Turning relaying off removes both keys but leaves the now-empty `com.mattermost.calls` object behind — `merge` created the path and only the keys it was given are removed. Harmless, and Mattermost reads it as no settings at all. Mattermost writes this file itself on its first start; until it exists the package skips the merge rather than racing the image's entrypoint with a partial file.
+**`config.json` is Mattermost's own file, and the model is a two-key window onto it.** The only keys modelled are `ICEServersConfigs` and `TURNStaticAuthSecret` under the Calls plugin's `com.mattermost.calls` entry; everything else in the file — the whole of Mattermost's configuration and every other plugin's settings — passes through untouched, because every level of the model is a `z.looseObject`, which preserves unknown keys, and `merge` writes only the keys it is handed. It is written on start **only** when there is something to write or something of ours to clear, so a server that never turned relaying on never gets an entry for a plugin it may not have installed. Turning relaying off removes both keys but leaves the now-empty `com.mattermost.calls` object behind — `merge` created the path and only the keys it was given are removed. Harmless, and Mattermost reads it as no settings at all. Mattermost writes this file itself on its first start; until it exists the package skips the merge rather than racing the image's entrypoint with a partial file.
 
 **Everything else is configured by environment**, and that is where this package's overrides live:
 
@@ -120,11 +120,11 @@ One interface, serving the web client and Mattermost's API — which is also wha
 | --------- | ---- | ---- | ---- | ---------------------------- |
 | Web UI    | `ui` | ui   | 8065 | The Mattermost web interface |
 
-The port is bound on the `ui-multi` MultiHost and is not masked.
+The port is bound on the `ui-multi` MultiHost and is not masked. StartOS's **Open UI** opens the address chosen in Set Primary URL, when it is one of this interface's addresses.
 
 ## Installation and First-Run Flow
 
-Install generates the database password and picks a site URL from the addresses published for the interface, preferring the `.local` one. No task is raised on a fresh install and no credential is shown: **the first account created in the web UI becomes the System Admin**, regardless of the sign-up settings.
+Install generates the database password and picks a site URL from the addresses published for the interface: a public domain (preferring HTTPS), then `.local`, then the first address, according to availability. No task is raised on a fresh install when an address is available, and no credential is shown: **the first account created in the web UI becomes the System Admin**, regardless of the sign-up settings.
 
 Two things are worth doing before inviting anyone:
 
@@ -142,7 +142,7 @@ Chooses which published address Mattermost treats as its site URL.
 - **What it changes:** `siteUrl` in `store.json`.
 - **Cost:** seconds, then a restart.
 - **Repeat safety:** idempotent, but not consequence-free once in use — links already sent keep the old address, and mobile clients configured against it need updating.
-- **Input:** a dropdown of the interface's non-local addresses.
+- **Input:** a dropdown of the interface's non-local addresses, defaulting to a public domain (preferring HTTPS), then `.local`, then the first address, according to availability. It is pre-filled with the stored URL, following its hostname to a new port or scheme when available; an unavailable stored URL remains in the prefill.
 
 ### Configure SMTP
 
@@ -187,13 +187,13 @@ None of the three requires being logged in, which is the point: they work when t
 
 ## Tasks
 
-One task, and it cannot appear on a fresh install.
+One task, raised when the stored URL is unset or its hostname is no longer one of the interface's addresses.
 
-| Task            | Severity   | Raised when                                                 | Cleared when    |
-| --------------- | ---------- | ----------------------------------------------------------- | --------------- |
-| Set Primary URL | `critical` | A site URL was set, and that address is no longer published | The action runs |
+| Task            | Severity   | Raised when                                                                          | Cleared when                                                                                       |
+| --------------- | ---------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Set Primary URL | `critical` | The site URL is unset, or its hostname is no longer one of the interface's addresses | The stored URL is one of the interface's addresses again — the action runs, or the address returns |
 
-Init picks an address when none is stored, so this fires only when one that was in use goes away. `critical` because a wrong site URL breaks email links, mobile clients, and OAuth callbacks in ways that are not obvious from inside the app.
+Init seeds an address when none is stored and one is available. If no address is available, the task is raised even on a fresh install; it also fires when a stored hostname goes away, including when the interface has no addresses at all. `critical` because a wrong site URL breaks email links, mobile clients, and OAuth callbacks in ways that are not obvious from inside the app.
 
 ## Health Checks
 
@@ -221,13 +221,13 @@ The two halves are not independent: the dump is taken with a credential that liv
 
 ## Limitations and Differences
 
-1. **x86_64 only.** There is no aarch64 or riscv64 build of this package.
+1. **x86_64 only**, because upstream publishes its image for x86_64 alone. There is no aarch64 or riscv64 build of this package.
 2. **PostgreSQL is a private sidecar.** It cannot be shared with another service or replaced with an external database.
 3. **Public sign-ups are off at install.** The server is invite-only until you change it; the first account is System Admin regardless.
 4. **Telemetry is disabled.**
 5. **Local mode is enabled**, which is what makes the recovery actions work without a login. It is reachable only through a socket inside the service.
 6. **Changing the site URL restarts the service**, and does not retroactively fix links already sent.
-7. **The Calls plugin is not shipped and there is no marketplace here.** Call relaying configures a plugin you install yourself, by uploading its release bundle under Plugin Management; the settings are written whether or not it is present, and take effect once it is.
+7. **Calls comes prepackaged and enabled.** Call relaying's settings are written whether or not the plugin is enabled, and take effect once it is.
 8. **Call relaying is Coturn or nothing.** There is no field for an external TURN server — configure one in the System Console instead, and leave the toggle off.
 
 ---

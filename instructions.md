@@ -7,15 +7,15 @@
 ## What you get on StartOS
 
 - A Mattermost server with its own bundled PostgreSQL database — no other StartOS service is required.
-- A **Web UI** interface served on Mattermost's default HTTP port (`8065`). LAN, `.local`, Tor, and any custom domains you've added all work out of the box.
+- A **Web UI** interface served on Mattermost's default HTTP port (`8065`). It is reachable at every address StartOS gives it — LAN, `.local`, and any domains you add.
 - All of Mattermost's data — uploads, plugins, server config, logs, and the Postgres database — included in StartOS backups and restored together.
 
 ## Getting set up
 
 1. Open Mattermost's **Dashboard** and click the **Web UI** interface to open the login page.
 2. The first time you visit, Mattermost will prompt you to **create an account**. This account automatically becomes the System Admin — choose a strong password and treat it like one.
-3. Mattermost will walk you through creating your first **team** and inviting the first members. Invite links work on any of Mattermost's URLs (LAN, `.local`, Tor, or a custom domain).
-4. Run the **Set Primary URL** action from the StartOS Actions menu to choose which of your addresses Mattermost treats as its Site URL. Mattermost embeds it in invite links, password-reset emails, and push notifications, so set it before sending invites.
+3. Mattermost will walk you through creating your first **team** and inviting the first members. Invite links work on any of Mattermost's URLs.
+4. Run the **Set Primary URL** action from the StartOS Actions menu to choose which of your addresses Mattermost treats as its Site URL. Mattermost embeds it in invite links, password-reset emails, and push notifications, so set it before sending invites. StartOS's **Open UI** button opens Mattermost at that address.
 5. Recommended: run the **Configure SMTP** action so users can receive invite, mention, and password-reset emails. (Mobile push still goes through Mattermost's **Push Notification Server**, configured in the System Console.)
 
 ## Signups: invite-only by default
@@ -43,7 +43,7 @@ Mattermost Calls sends audio and video directly between participants, which fail
 
 Three things have to be in place:
 
-1. **Install the Calls plugin.** It is not bundled, and the plugin marketplace is not available here — download the release bundle from <https://github.com/mattermost/mattermost-plugin-calls/releases> and upload it under **System Console → Plugin Management**.
+1. **Make sure the Calls plugin is enabled.** It comes installed and enabled; check under **System Console → Plugin Management**.
 2. **Install the separate Coturn service** from the StartOS marketplace, start it, and give it a public domain of its own, as its own instructions describe.
 3. **Run Configure Call Relay** and turn the toggle on.
 

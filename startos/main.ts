@@ -2,6 +2,7 @@ import { T } from '@start9labs/start-sdk'
 import { CALLS_PLUGIN_ID, configJson } from './fileModels/config.json'
 import { storeJson } from './fileModels/store.json'
 import { i18n } from './i18n'
+import { primaryUrl } from './primaryUrl'
 import { sdk } from './sdk'
 import {
   buildDataSource,
@@ -23,7 +24,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
   if (!store) {
     throw new Error(i18n('store.json not found'))
   }
-  const { postgresPassword = '', siteUrl, smtp, signup, callsTurn } = store
+  const { postgresPassword = '', smtp, signup, callsTurn } = store
+  const siteUrl = await primaryUrl.bestUsable(effects).const()
 
   // Point the Calls plugin at Coturn, or clear what we put there. Resolves to
   // null when relaying is off, when Coturn has no public domain yet, or when

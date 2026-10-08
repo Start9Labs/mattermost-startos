@@ -18,17 +18,22 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **The recovery actions reach Mattermost through the local-mode socket, not the network**, which is why they are `only-running` and why the `run` subpath is mounted into their subcontainers as well as the daemon's. `mmctl` has no flag for the socket path — it reads `MMCTL_LOCAL_SOCKET_PATH`, so that env var is what points it at the shared mount.
-- **`MM_SERVICESETTINGS_ENABLELOCALMODE` must stay on.** Without it the recovery actions have no way in, which is precisely the situation they exist for.
-- **The `mattermost` volume is mounted as six subpaths, not at its root**, so each directory lands where the image expects it. The `chown` oneshot creates all six and hands them to uid/gid 2000 before anything starts, because StartOS mounts volumes root-owned.
-- **`ENABLEUSERCREATION` and `ENABLEOPENSERVER` are different switches.** The first is a master gate that blocks even invitations; the second only controls self-service sign-up. Don't collapse them into one toggle.
-- **The database password lives in `store.json` on the `main` volume and is what backups authenticate with.** Moving it breaks `backups.ts` as well as `main`.
-- **x86_64 only** — both images are declared for that architecture alone. Adding aarch64 means verifying upstream publishes it for both.
+- **`MM_SERVICESETTINGS_ENABLELOCALMODE` must stay on** — the recovery actions reach Mattermost only through the local-mode socket, and they exist for when nothing else gets in.
+- **Keep `ENABLEUSERCREATION` and `ENABLEOPENSERVER` as separate toggles** — the first also blocks invitations, the second only self-service sign-up.
+- **Don't move `postgresPassword` out of `store.json` without updating `backups.ts`** — the dump authenticates with it.

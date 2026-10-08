@@ -17,7 +17,7 @@ const dict = {
   // main.ts
   'store.json not found': 9,
 
-  // actions/setPrimaryUrl.ts, init/taskSetPrimaryUrl.ts
+  // primaryUrl.ts, init/primaryUrlTask.ts
   URL: 10,
   'Set Primary URL': 11,
   'Choose which of your Mattermost URLs should serve as the Site URL. Mattermost uses this when generating links in emails, OAuth callbacks, push notification payloads, and mobile deep links.': 12,
@@ -31,7 +31,7 @@ const dict = {
   'Allow Account Creation': 16,
   'Master switch for all new accounts. When off, nobody new can join — not even by invitation. Leave on unless you want to freeze the member list entirely.': 17,
   'Public Signups': 18,
-  'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled (recommended), the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.': 19,
+  'When enabled, anyone who can reach your Mattermost URL can self-register. When disabled, the server is invite-only — new members join via an invite link or email invitation. The first account always becomes System Admin regardless.': 19,
   'Configure Signups': 20,
   'Control whether new accounts can be created at all, and whether sign-up is public or invite-only.': 21,
 
@@ -43,7 +43,6 @@ const dict = {
 
   // actions/resetUserPassword.ts
   'Username or Email': 22,
-  'The username or email address of the account whose password you want to reset.': 23,
   'Reset User Password': 24,
   'Generate a new password for a Mattermost user. Useful when an admin gets locked out or forgets their password.': 25,
   Recovery: 26,
@@ -53,14 +52,12 @@ const dict = {
   'New Password': 30,
 
   // actions/promoteToAdmin.ts
-  'The username or email address of the user to grant System Admin privileges.': 31,
   'Promote to System Admin': 32,
   'Grant System Admin privileges to an existing user. Useful when the original admin leaves or is locked out and you need to elevate a regular account.': 33,
   Promoted: 34,
   '${user} is now a System Admin.': 35,
 
   // actions/demoteFromAdmin.ts
-  'The username or email address of the System Admin to demote to a regular user.': 36,
   'Demote from System Admin': 37,
   'Revoke System Admin privileges from a user, returning them to regular member status.': 38,
   Demoted: 39,

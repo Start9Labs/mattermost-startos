@@ -7,7 +7,7 @@ export const postgresUser = 'mmuser'
 export const postgresDb = 'mattermost'
 
 // Host id (the `sdk.MultiHost.of` group) vs. the interface id exported on it —
-// they differ here, so keep both for `sdk.host.getOwn` lookups.
+// they differ here.
 export const uiHostId = 'ui-multi'
 export const uiInterfaceId = 'ui'
 
@@ -116,17 +116,6 @@ export function getPostgresSub(effects: T.Effects) {
 
 export function buildDataSource(password: string): string {
   return `postgres://${postgresUser}:${encodeURIComponent(password)}@127.0.0.1:${postgresPort}/${postgresDb}?sslmode=disable&connect_timeout=10`
-}
-
-export async function getNonLocalUrls(effects: T.Effects): Promise<string[]> {
-  return sdk.host
-    .getOwn(effects, uiHostId, (host) => {
-      const iface = Object.values(host?.bindings ?? {})
-        .flatMap((b) => Object.values(b.interfaces))
-        .find((i) => i.id === uiInterfaceId)
-      return iface?.addressInfo.nonLocal.format() || []
-    })
-    .const()
 }
 
 // The external Coturn package the Calls plugin relays through.

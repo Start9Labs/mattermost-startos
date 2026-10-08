@@ -11,9 +11,7 @@ export const inputSpec = InputSpec.of({
     required: true,
     default: null,
     placeholder: 'admin',
-    description: i18n(
-      'The username or email address of the account whose password you want to reset.',
-    ),
+    description: null,
   }),
 })
 

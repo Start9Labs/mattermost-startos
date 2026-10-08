@@ -10,9 +10,7 @@ export const inputSpec = InputSpec.of({
     required: true,
     default: null,
     placeholder: 'alice',
-    description: i18n(
-      'The username or email address of the System Admin to demote to a regular user.',
-    ),
+    description: null,
   }),
 })
 
