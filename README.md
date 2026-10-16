@@ -204,7 +204,7 @@ Two checks, one per daemon.
 | `postgres`   | "Database"      | `pg_isready`           | —     |
 | `mattermost` | "Web Interface" | Port 8065 is listening | 2 min |
 
-**The two-minute grace covers a first start**, where the database is initialised and Mattermost runs its schema migrations before binding. `postgres` reports `loading` rather than failing while it comes up, so a slow first start looks like progress rather than a fault.
+**The two-minute grace covers a first start**, where the database is initialised and Mattermost runs its schema migrations before binding. `postgres` reports `starting` until `pg_isready` succeeds, keeping readiness probes on the SDK's one-second startup interval.
 
 A `mattermost` failure after that points at the application — most often a configuration value it rejects, which it names in the service logs.
 

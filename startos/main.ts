@@ -130,7 +130,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
           if (exitCode !== 0) {
             return {
-              result: 'loading',
+              result: 'starting',
               message: i18n('Waiting for PostgreSQL to be ready'),
             }
           }
