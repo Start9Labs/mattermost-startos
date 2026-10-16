@@ -10,9 +10,10 @@ Mattermost ships with two upstream sources: Mattermost itself (the Team Edition 
 - List recent tags:
   ```sh
   curl -fsSL "https://hub.docker.com/v2/repositories/mattermost/mattermost-team-edition/tags?page_size=20&ordering=last_updated" \
-    | jq -r '.results[].name' | grep -Ev '^(latest|release-)'
+    | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vr
   ```
-- Cross-reference release notes at [Start9Labs's upstream `mattermost/mattermost` releases](https://github.com/mattermost/mattermost/releases) — tag names match the image tags (minus the leading `v`).
+- Cross-reference [upstream tags](https://github.com/mattermost/mattermost/tags) — tag names match the image tags (minus the leading `v`), excluding prereleases.
+- Read the corresponding major version's changelog (currently [v12](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)) and [important upgrade notes](https://docs.mattermost.com/administration-guide/upgrade/important-upgrade-notes.html). The GitHub release summaries omit database migrations and breaking changes.
 - Current pin: `images.mattermost.source.dockerTag` in `startos/manifest/index.ts` (format: `mattermost/mattermost-team-edition:<version>`).
 
 ### PostgreSQL
