@@ -35,7 +35,9 @@
 
 ## Image and Container Runtime
 
-Two upstream images, unmodified.
+Two upstream images. `postgres` is unmodified; `mattermost` gets a fresh CA
+bundle from the root `Dockerfile`, a temporary layer that comes out once
+upstream ships an image built on a fixed store.
 
 | Property      | Value                                            |
 | ------------- | ------------------------------------------------ |
@@ -236,7 +238,7 @@ The two halves are not independent: the dump is taken with a credential that liv
 
 ```yaml
 package_id: mattermost
-image: mattermost/mattermost-team-edition # plus postgres
+image: mattermost/mattermost-team-edition + root Dockerfile (CA bundle) # plus postgres
 architectures:
   - x86_64
 subcontainers:
