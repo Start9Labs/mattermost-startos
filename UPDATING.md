@@ -12,7 +12,7 @@ Mattermost ships with two upstream sources: Mattermost itself (the Team Edition 
   curl -fsSL "https://hub.docker.com/v2/repositories/mattermost/mattermost-team-edition/tags?page_size=20&ordering=last_updated" \
     | jq -r '.results[].name' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vr
   ```
-- Cross-reference [upstream tags](https://github.com/mattermost/mattermost/tags) — tag names match the image tags (minus the leading `v`), excluding prereleases.
+- Cross-reference [upstream tags](https://github.com/mattermost/mattermost/tags) — tag names match the image tags (minus the leading `v`). Also check release metadata with `gh api repos/mattermost/mattermost/releases/tags/v<version>` and exclude releases marked `prerelease` or `draft`, even when the tag has no prerelease suffix.
 - Read the target major version's changelog (`https://docs.mattermost.com/product-overview/mattermost-v<major>-changelog.html`) and [important upgrade notes](https://docs.mattermost.com/administration-guide/upgrade/important-upgrade-notes.html). The GitHub release summaries omit database migrations and breaking changes.
 - Current pin: `images.mattermost.source.dockerTag` in `startos/manifest/index.ts` (format: `mattermost/mattermost-team-edition:<version>`).
 
