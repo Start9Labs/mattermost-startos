@@ -120,13 +120,10 @@ export function buildDataSource(password: string): string {
 
 // The external Coturn package the Calls plugin relays through.
 export const coturnId = 'coturn'
-export const coturnVersionRange = '>=4.14.0:0'
+export const coturnVersionRange = '>=4.18.0:6'
 export const coturnHostId = 'turn'
 export const coturnInterfaceId = 'turn'
-// Coturn publishes its shared secret at `shared/turn-secret` on its `main`
-// volume. Mounting that subpath alone keeps the rest of that volume —
-// turnserver.conf, which holds the same secret in plaintext, and the coturn
-// database — out of view.
+// Coturn publishes its shared secret at `turn-secret` on its `public` volume.
 export const coturnMountpoint = '/mnt/coturn'
 export const coturnSecretPath = `${coturnMountpoint}/turn-secret`
 
@@ -192,15 +189,15 @@ export async function resolveCallsTurn(
 }
 
 // Read through a throwaway container so a missing Coturn can never break
-// Mattermost's own daemons, and we only ever see the `shared` subpath.
+// Mattermost's own daemons, and we only ever see Coturn's `public` volume.
 async function readCoturnSecret(effects: T.Effects): Promise<string | null> {
   const reader = sdk.SubContainer.of(
     effects,
     { imageId: 'postgres' },
     sdk.Mounts.of().mountDependency({
       dependencyId: coturnId,
-      volumeId: 'main',
-      subpath: 'shared',
+      volumeId: 'public',
+      subpath: null,
       mountpoint: coturnMountpoint,
       readonly: true,
     }),
