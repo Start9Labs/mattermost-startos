@@ -110,7 +110,7 @@ One, optional, and only while it is selected. PostgreSQL is bundled as a private
 
 **No health check is declared, deliberately.** Coturn's own `TURN Server` check fails until you attach a public domain to it, and naming it here would leave Mattermost showing a permanently unmet dependency even though Calls works fine without a relay. Coturn's own check already says what is missing.
 
-The shared secret is read through a throwaway `coturn-secret-read` container that mounts only Coturn's `shared` subpath read-only — so a missing or broken Coturn can never take Mattermost's own daemons down, and the rest of Coturn's volume stays out of view.
+The shared secret is read through a throwaway `coturn-secret-read` container that mounts only Coturn's `public` volume read-only — so a missing or broken Coturn can never take Mattermost's own daemons down, and Coturn's private data stays out of view.
 
 ## Network Access and Interfaces
 
