@@ -5,7 +5,6 @@ export const current = VersionInfo.of({
   releaseNotes: {
     en_US: `Updated Mattermost to 12.1.0.
 
-- New: bot accounts can carry profile attributes
 - New: an Out of Office notice above the message box when a direct-message recipient has automatic replies on
 - New: "Download all" in the media gallery saves every attachment as one zip file
 - New: file search can be turned off from the System Console
@@ -15,7 +14,6 @@ export const current = VersionInfo.of({
 [Full release notes](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
     es_ES: `Mattermost actualizado a 12.1.0.
 
-- Nuevo: las cuentas de bot pueden tener atributos de perfil
 - Nuevo: un aviso de Fuera de la oficina sobre el cuadro de mensaje cuando el destinatario de un mensaje directo tiene activadas las respuestas automáticas
 - Nuevo: "Descargar todo" en la galería de medios guarda todos los adjuntos en un único archivo zip
 - Nuevo: la búsqueda de archivos se puede desactivar desde la Consola del sistema
@@ -25,7 +23,6 @@ export const current = VersionInfo.of({
 [Notas de la versión completas](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
     de_DE: `Mattermost auf 12.1.0 aktualisiert.
 
-- Neu: Bot-Konten können Profilattribute tragen
 - Neu: ein Abwesenheitshinweis über dem Nachrichtenfeld, wenn der Empfänger einer Direktnachricht automatische Antworten aktiviert hat
 - Neu: „Alle herunterladen“ in der Mediengalerie speichert alle Anhänge als eine einzige ZIP-Datei
 - Neu: die Dateisuche lässt sich in der Systemkonsole abschalten
@@ -35,7 +32,6 @@ export const current = VersionInfo.of({
 [Vollständige Versionshinweise](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
     pl_PL: `Zaktualizowano Mattermost do 12.1.0.
 
-- Nowość: konta botów mogą mieć atrybuty profilu
 - Nowość: powiadomienie o nieobecności nad polem wiadomości, gdy odbiorca wiadomości bezpośredniej ma włączone automatyczne odpowiedzi
 - Nowość: „Pobierz wszystko” w galerii multimediów zapisuje wszystkie załączniki jako jeden plik zip
 - Nowość: wyszukiwanie plików można wyłączyć w Konsoli systemowej
@@ -45,7 +41,6 @@ export const current = VersionInfo.of({
 [Pełne informacje o wydaniu](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
     fr_FR: `Mattermost mis à jour vers 12.1.0.
 
-- Nouveau : les comptes de bot peuvent porter des attributs de profil
 - Nouveau : un avis d'absence au-dessus de la zone de saisie lorsque le destinataire d'un message direct a activé les réponses automatiques
 - Nouveau : « Tout télécharger » dans la galerie multimédia enregistre toutes les pièces jointes dans un seul fichier zip
 - Nouveau : la recherche de fichiers peut être désactivée depuis la Console système
