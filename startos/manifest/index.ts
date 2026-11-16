@@ -14,7 +14,7 @@ export const manifest = setupManifest({
   images: {
     mattermost: {
       source: {
-        dockerTag: 'mattermost/mattermost-team-edition:12.0.2',
+        dockerTag: 'mattermost/mattermost-team-edition:12.1.0',
       },
       arch: ['x86_64'],
       emulateMissing: false,
