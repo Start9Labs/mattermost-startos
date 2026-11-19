@@ -221,3 +221,14 @@ export function mmctlCommand(args: string[]): [string, ...string[]] {
 // location from this env var (default /var/tmp/mattermost_local.socket).
 // Point it at the socket on the shared `run` mount so it reaches the daemon.
 export const mmctlEnv = { MMCTL_LOCAL_SOCKET_PATH: MM_LOCAL_SOCKET }
+
+// Written into config.json once, never on start, so the System Console can change them afterwards.
+export const privacyDefaults = {
+  ServiceSettings: { EnableSecurityFixAlert: false },
+  AnnouncementSettings: {
+    AdminNoticesEnabled: false,
+    UserNoticesEnabled: false,
+  },
+  PluginSettings: { EnableRemoteMarketplace: false },
+  EmailSettings: { PushNotificationContents: 'generic_no_channel' },
+}

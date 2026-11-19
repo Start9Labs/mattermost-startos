@@ -2,6 +2,7 @@ import { primaryUrl } from '../primaryUrl'
 import { sdk } from '../sdk'
 import { demoteFromAdmin } from './demoteFromAdmin'
 import { manageCallsTurn } from './manageCallsTurn'
+import { managePluginUploads } from './managePluginUploads'
 import { manageSignup } from './manageSignup'
 import { manageSmtp } from './manageSmtp'
 import { promoteToAdmin } from './promoteToAdmin'
@@ -12,6 +13,7 @@ export const actions = sdk.Actions.of()
   .addAction(manageSmtp)
   .addAction(manageSignup)
   .addAction(manageCallsTurn)
+  .addAction(managePluginUploads)
   .addAction(resetUserPassword)
   .addAction(promoteToAdmin)
   .addAction(demoteFromAdmin)

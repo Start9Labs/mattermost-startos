@@ -15,6 +15,7 @@ const shape = z.looseObject({
   // this is on, `main` owns Calls' ICE server list and rewrites it on every
   // start; turning it off clears what the package put there.
   callsTurn: z.boolean().catch(false).default(false),
+  pluginUploads: z.boolean().catch(false).default(false),
 })
 
 export const storeJson = FileHelper.json(

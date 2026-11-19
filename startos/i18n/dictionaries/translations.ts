@@ -44,6 +44,10 @@ export default {
     42: 'Retransmita las llamadas de Mattermost a través del servicio Coturn para que se establezcan cuando un participante está detrás de NAT o de un cortafuegos restrictivo. Requiere que el complemento Calls esté instalado en Mattermost y que Coturn esté instalado y en ejecución con su propio dominio público; hasta que ambos lo estén, las llamadas recurren a una conexión directa.',
     43: 'Configurar la retransmisión de llamadas',
     44: 'Entregue al complemento Calls la dirección y el secreto compartido del servicio Coturn, para que las llamadas que no puedan conectarse directamente se retransmitan.',
+    45: 'Permitir la subida de complementos',
+    46: 'Permite que los System Admins instalen complementos subiendo un archivo de complemento en la Consola del sistema. Un complemento se ejecuta dentro del servidor de Mattermost con acceso completo a sus datos, así que mientras esto esté activado, cualquiera que tenga una cuenta de System Admin puede ejecutar el código que quiera en tu servidor. Los complementos ya instalados siguen funcionando en ambos casos.',
+    47: 'Configurar la subida de complementos',
+    48: 'Controla si los System Admins pueden instalar complementos subiéndolos en la Consola del sistema.',
   },
   de_DE: {
     0: 'Starte Mattermost!',
@@ -88,6 +92,10 @@ export default {
     42: 'Mattermost-Anrufe über den Coturn-Dienst weiterleiten, damit sie auch zustande kommen, wenn ein Teilnehmer hinter NAT oder einer restriktiven Firewall sitzt. Erfordert, dass das Calls-Plugin in Mattermost installiert ist und dass Coturn installiert ist, läuft und eine eigene öffentliche Domain hat; bis beides zutrifft, fallen Anrufe auf eine Direktverbindung zurück.',
     43: 'Anrufweiterleitung konfigurieren',
     44: 'Übergibt dem Calls-Plugin die Adresse und das gemeinsame Geheimnis des Coturn-Dienstes, damit Anrufe weitergeleitet werden, die sich nicht direkt verbinden können.',
+    45: 'Plugin-Uploads erlauben',
+    46: 'Erlaubt System-Admins, Plugins durch Hochladen einer Plugin-Datei in der Systemkonsole zu installieren. Ein Plugin läuft im Mattermost-Server mit vollem Zugriff auf dessen Daten; solange dies aktiviert ist, kann daher jeder mit einem System-Admin-Konto beliebigen Code auf Ihrem Server ausführen. Bereits installierte Plugins funktionieren in beiden Fällen weiter.',
+    47: 'Plugin-Uploads konfigurieren',
+    48: 'Legt fest, ob System-Admins Plugins durch Hochladen in der Systemkonsole installieren können.',
   },
   pl_PL: {
     0: 'Uruchamianie Mattermost!',
@@ -132,6 +140,10 @@ export default {
     42: 'Przekazuj połączenia Mattermost przez usługę Coturn, aby zestawiały się, gdy uczestnik jest za NAT-em lub restrykcyjną zaporą. Wymaga zainstalowanej w Mattermost wtyczki Calls oraz zainstalowanego i uruchomionego Coturn z własną domeną publiczną; dopóki nie ma obu, połączenia wracają do trybu bezpośredniego.',
     43: 'Konfiguruj przekazywanie połączeń',
     44: 'Przekazuje wtyczce Calls adres i współdzielony sekret usługi Coturn, aby połączenia, które nie mogą zestawić się bezpośrednio, były przekazywane.',
+    45: 'Zezwalaj na przesyłanie wtyczek',
+    46: 'Pozwala System Adminom instalować wtyczki przez przesłanie pliku wtyczki w Konsoli systemowej. Wtyczka działa wewnątrz serwera Mattermost z pełnym dostępem do jego danych, więc gdy ta opcja jest włączona, każdy, kto ma konto System Admina, może uruchomić na Twoim serwerze dowolny kod. Już zainstalowane wtyczki działają w obu przypadkach.',
+    47: 'Konfiguruj przesyłanie wtyczek',
+    48: 'Określa, czy System Admini mogą instalować wtyczki, przesyłając je w Konsoli systemowej.',
   },
   fr_FR: {
     0: 'Démarrage de Mattermost !',
@@ -176,5 +188,9 @@ export default {
     42: "Relayer les appels Mattermost via le service Coturn pour qu'ils aboutissent lorsqu'un participant est derrière un NAT ou un pare-feu restrictif. Nécessite que le plugin Calls soit installé dans Mattermost et que Coturn soit installé et démarré avec un domaine public qui lui est propre ; tant que ce n'est pas le cas, les appels se rabattent sur une connexion directe.",
     43: 'Configurer le relais des appels',
     44: "Transmet au plugin Calls l'adresse et le secret partagé du service Coturn, afin que les appels qui ne peuvent pas se connecter directement soient relayés.",
+    45: 'Autoriser le téléversement de plugins',
+    46: "Permet aux System Admins d'installer des plugins en téléversant un fichier de plugin dans la Console système. Un plugin s'exécute dans le serveur Mattermost avec un accès complet à ses données ; tant que cette option est activée, toute personne disposant d'un compte System Admin peut donc exécuter le code de son choix sur votre serveur. Les plugins déjà installés continuent de fonctionner dans les deux cas.",
+    47: 'Configurer le téléversement de plugins',
+    48: 'Contrôle si les System Admins peuvent installer des plugins en les téléversant dans la Console système.',
   },
 } satisfies Record<string, LangDict>

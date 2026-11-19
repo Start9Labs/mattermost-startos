@@ -3,7 +3,7 @@ import { sdk } from '../sdk'
 
 // The Calls plugin's id. Mattermost keeps a plugin's settings in config.json
 // whether or not that plugin is loaded, so these can be written before Calls is
-// uploaded and take effect once it is.
+// installed and take effect once it is.
 export const CALLS_PLUGIN_ID = 'com.mattermost.calls'
 
 // Only the two Calls settings this package owns are modelled. Everything else
