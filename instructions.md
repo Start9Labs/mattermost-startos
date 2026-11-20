@@ -48,7 +48,7 @@ Installed plugins are kept on the `mattermost` volume and included in StartOS ba
 
 Push notifications are off until you turn them on. To turn them on, go to **System Console → Environment → Push Notification Server** and choose Mattermost's push notification service. Mattermost then relays each notification through Mattermost's push server and on through Apple or Google to the phone.
 
-What a notification contains is set under **System Console → Site Configuration → Notifications → Push Notification Contents**. On StartOS it starts at **Generic description with only sender name**: the phone shows who wrote, and the message stays on your server until the app opens it. Choose a fuller option if you want channel names or message text on the lock screen, knowing that it then passes through Mattermost's, and Apple's or Google's, servers.
+Notification text is set under **System Console → Site Configuration → Notifications → Push Notification Contents**. On StartOS it starts at **Generic description with only sender name**: the phone shows who wrote, without the channel name or message text. The push relay still receives the sender's name, device token, and routing metadata, including server, channel, and post identifiers. Choose a fuller option if you want channel names or message text on the lock screen, knowing that it then passes through Mattermost's, and Apple's or Google's, servers.
 
 ### What leaves your server
 
@@ -56,7 +56,7 @@ Usage telemetry and crash reporting are off. Security-alert reports to Mattermos
 
 A few connections remain:
 
-- About once a day, Mattermost asks GitHub for its own latest release, to show whether your server is up to date. Nothing about your server is sent.
+- An admin-requested update check can ask GitHub for Mattermost's latest release. This is separate from Mattermost's security-alert reports; Team Edition does not run the scheduled Enterprise health-dashboard check.
 - Calls looks up participants' public addresses through Mattermost's STUN server, unless **Configure Call Relay** points it at Coturn instead.
 - Push notifications, once you turn them on, go through Mattermost's push server as described above.
 - Link previews fetch the pages people link to in messages.
