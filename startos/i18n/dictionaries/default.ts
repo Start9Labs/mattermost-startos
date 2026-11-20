@@ -41,6 +41,12 @@ const dict = {
   'Configure Call Relay': 43,
   "Hand the Calls plugin the Coturn service's address and shared secret, so calls that cannot connect directly are relayed.": 44,
 
+  // actions/managePluginUploads.ts
+  'Allow Plugin Uploads': 45,
+  'Let System Admins install plugins by uploading a plugin file in the System Console. A plugin runs inside the Mattermost server with full access to its data, so while this is on, anyone holding a System Admin account can run code of their choosing on your server. Plugins already installed keep working either way.': 46,
+  'Configure Plugin Uploads': 47,
+  'Control whether System Admins can install plugins by uploading them in the System Console.': 48,
+
   // actions/resetUserPassword.ts
   'Username or Email': 22,
   'Reset User Password': 24,

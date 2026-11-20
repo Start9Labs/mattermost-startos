@@ -68,12 +68,12 @@ The `chown` oneshot creates all six and hands them to the image's user before an
 
 ## File Models
 
-Two models: this package's own state, and a two-key window onto Mattermost's config file.
+Two models: this package's own state, and a narrow window onto Mattermost's config file.
 
-| File                 | Format | Modelled                | Written by                                     |
-| -------------------- | ------ | ----------------------- | ---------------------------------------------- |
-| `store.json`         | JSON   | Yes — `FileHelper.json` | Install, every init, and the actions           |
-| `config/config.json` | JSON   | Two keys only           | Every start, only while relaying is configured |
+| File                 | Format | Modelled                | Written by                                                        |
+| -------------------- | ------ | ----------------------- | ----------------------------------------------------------------- |
+| `store.json`         | JSON   | Yes — `FileHelper.json` | Install, every init, and the actions                              |
+| `config/config.json` | JSON   | Two keys only           | Install, one update, and every start while relaying is configured |
 
 | Key                | Set by                                | Notes                                                      |
 | ------------------ | ------------------------------------- | ---------------------------------------------------------- |
@@ -82,21 +82,34 @@ Two models: this package's own state, and a two-key window onto Mattermost's con
 | `smtp`             | The Configure SMTP action             | StartOS's system SMTP, your own server, or disabled        |
 | `signup`           | The Configure Signups action          | Two toggles, both defaulted below                          |
 | `callsTurn`        | The Configure Call Relay action       | Whether the Calls plugin relays through Coturn             |
+| `pluginUploads`    | The Configure Plugin Uploads action   | Whether System Admins can upload plugins; off by default   |
 
 `siteUrl` is handled by init in two ways. With nothing stored, it stores a public-domain address (preferring HTTPS), then a `.local` address, then the first address, according to availability. With something stored whose hostname is **no longer** one of the interface's addresses, it leaves the stored value alone and raises a `critical` task, because that address is embedded in links Mattermost has already sent. A stored hostname that is still published at a different port or scheme is followed to it.
 
-**`config.json` is Mattermost's own file, and the model is a two-key window onto it.** The only keys modelled are `ICEServersConfigs` and `TURNStaticAuthSecret` under the Calls plugin's `com.mattermost.calls` entry; everything else in the file — the whole of Mattermost's configuration and every other plugin's settings — passes through untouched, because every level of the model is a `z.looseObject`, which preserves unknown keys, and `merge` writes only the keys it is handed. It is written on start **only** when there is something to write or something of ours to clear, so a server that never turned relaying on never gets an entry for a plugin it may not have installed. Turning relaying off removes both keys but leaves the now-empty `com.mattermost.calls` object behind — `merge` created the path and only the keys it was given are removed. Harmless, and Mattermost reads it as no settings at all. Mattermost writes this file itself on its first start; until it exists the package skips the merge rather than racing the image's entrypoint with a partial file.
+**`config.json` is Mattermost's own file, and the model is a two-key window onto it.** The only keys modelled are `ICEServersConfigs` and `TURNStaticAuthSecret` under the Calls plugin's `com.mattermost.calls` entry; everything else in the file — the whole of Mattermost's configuration and every other plugin's settings — passes through untouched, because every level of the model is a `z.looseObject`, which preserves unknown keys, and `merge` writes only the keys it is handed. It is written on start **only** when there is something to write or something of ours to clear, so a server that never turned relaying on never gets an entry for a plugin it may not have installed. Turning relaying off removes both keys but leaves the now-empty `com.mattermost.calls` object behind — `merge` created the path and only the keys it was given are removed. Harmless, and Mattermost reads it as no settings at all.
+
+**A handful of privacy defaults are written into `config.json` once, and never again.** Install writes them into a fresh, partial `config.json`, which Mattermost completes with its own defaults on first start; the update to `12.1.0:1` writes them into an existing one. After that they are ordinary Mattermost settings, changed in the System Console:
+
+| Setting                                    | Written              | Upstream default | Effect                                                                                                                 |
+| ------------------------------------------ | -------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `ServiceSettings.EnableSecurityFixAlert`   | `false`              | `true`           | No periodic report (server ID, build, database type, OS, user and team counts) to `securityupdatecheck.mattermost.com` |
+| `AnnouncementSettings.AdminNoticesEnabled` | `false`              | `true`           | No in-product notices for admins                                                                                       |
+| `AnnouncementSettings.UserNoticesEnabled`  | `false`              | `true`           | No in-product notices for members; with both off, nothing is fetched from Mattermost's notices feed                    |
+| `PluginSettings.EnableRemoteMarketplace`   | `false`              | `true`           | The Marketplace lists only the plugins bundled with the server, fetching nothing                                       |
+| `EmailSettings.PushNotificationContents`   | `generic_no_channel` | `full`           | Omits message text and channel names from notification text; sender names and routing metadata still reach the relay   |
+
+`generic_no_channel` controls notification text, not the entire payload: the push relay still receives the sender's name, device token, and identifiers for the server, team, channel, post, and thread. `id_loaded` (contents fetched from the server on receipt) would be more private still, but it is an Enterprise feature: Team Edition silently sends `generic` (sender and channel name) in its place. **Push itself is left as Mattermost sets it, which on a fresh install here is off** — Mattermost initialises a missing `config.json` as an upgraded server, so `SendPushNotifications` is `false` and `PushNotificationServer` empty until the owner chooses a server in **System Console → Environment → Push Notification Server**. `instructions.md` tells them so.
 
 **Everything else is configured by environment**, and that is where this package's overrides live:
 
-| Variable                                               | Value              | Why it differs from leaving Mattermost alone                                               |
-| ------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------ |
-| `MM_TEAMSETTINGS_ENABLEOPENSERVER`                     | `false` at install | A personal server should be invite-only, not self-service                                  |
-| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`                     | `false`            | Nothing phones home                                                                        |
-| `MM_SERVICESETTINGS_ENABLELOCALMODE`                   | `true`             | Local mode is what lets the recovery actions administer the server without a network login |
-| `MM_PLUGINSETTINGS_ENABLEUPLOADS`                      | `true`             | Plugins can be installed, since the marketplace flow is not available here                 |
-| `MM_SQLSETTINGS_*`, `MM_SERVICESETTINGS_LISTENADDRESS` | derived            | Wiring to the bundled database and the published port                                      |
-| `MM_EMAILSETTINGS_*`                                   | derived            | Absent unless SMTP is configured                                                           |
+| Variable                                               | Value                | Why it differs from leaving Mattermost alone                                                                                                          |
+| ------------------------------------------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MM_TEAMSETTINGS_ENABLEOPENSERVER`                     | `false` at install   | A personal server should be invite-only, not self-service                                                                                             |
+| `MM_LOGSETTINGS_ENABLEDIAGNOSTICS`                     | `false`              | No usage telemetry, and no crash reports to Sentry (gated on it too)                                                                                  |
+| `MM_SERVICESETTINGS_ENABLELOCALMODE`                   | `true`               | Local mode is what lets the recovery actions administer the server without a network login                                                            |
+| `MM_PLUGINSETTINGS_ENABLEUPLOADS`                      | from `pluginUploads` | Upstream's default is also off, but the owner switches it from StartOS, so the System Console shows it locked; an uploaded plugin is server-side code |
+| `MM_SQLSETTINGS_*`, `MM_SERVICESETTINGS_LISTENADDRESS` | derived              | Wiring to the bundled database and the published port                                                                                                 |
+| `MM_EMAILSETTINGS_*`                                   | derived              | Absent unless SMTP is configured                                                                                                                      |
 
 `MM_TEAMSETTINGS_ENABLEUSERCREATION` is a second, broader switch, left on by default: turning it off freezes the member list entirely, blocking even invitations.
 
@@ -133,7 +146,7 @@ Two things are worth doing before inviting anyone:
 
 ## Actions
 
-Six actions, in two groups.
+Eight actions, in two groups.
 
 ### Set Primary URL
 
@@ -174,6 +187,15 @@ One toggle: whether Mattermost Calls relays through the Coturn service.
 **Relaying is configured only once Coturn has a public domain.** With the toggle on but Coturn lacking one — or with its secret unreadable — the settings are _cleared_ rather than left behind, since an ICE server list pointing at an unreachable relay is worse than none. Nothing reports that as an error; Calls falls back to direct connections.
 
 **While the toggle is on, this package owns Calls' ICE Servers Configurations field** and rewrites it on every start, so a value typed into the System Console will not survive. To point Calls at a different TURN server, leave the toggle off and configure it there instead.
+
+### Configure Plugin Uploads
+
+One toggle, off by default: whether System Admins can install a plugin by uploading its file under **System Console → Plugins → Plugin Management**.
+
+- **What it changes:** `pluginUploads` in `store.json`, which becomes `MM_PLUGINSETTINGS_ENABLEUPLOADS` on the next start. While it is set, the System Console shows the upload setting as managed by the environment.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent. Turning it off removes nothing — installed plugins stay installed and enabled; only further uploads, including uploading a newer version of an installed plugin, are refused.
+- **Why off:** a server plugin runs inside the Mattermost process with its data and database credentials, so upload turns any System Admin session into code execution on the server. The plugins bundled with the server, Calls among them, install without it.
 
 ### Recovery — Reset User Password, Promote to System Admin, Demote from System Admin
 
@@ -224,11 +246,12 @@ The two halves are not independent: the dump is taken with a credential that liv
 1. **x86_64 only**, because upstream publishes its image for x86_64 alone. There is no aarch64 or riscv64 build of this package.
 2. **PostgreSQL is a private sidecar.** It cannot be shared with another service or replaced with an external database.
 3. **Public sign-ups are off at install.** The server is invite-only until you change it; the first account is System Admin regardless.
-4. **Telemetry is disabled.**
-5. **Local mode is enabled**, which is what makes the recovery actions work without a login. It is reachable only through a socket inside the service.
-6. **Changing the site URL restarts the service**, and does not retroactively fix links already sent.
-7. **Calls comes prepackaged and enabled.** Call relaying's settings are written whether or not the plugin is enabled, and take effect once it is.
-8. **Call relaying is Coturn or nothing.** There is no field for an external TURN server — configure one in the System Console instead, and leave the toggle off.
+4. **Usage telemetry and crash reporting stay off.** Security-alert reports, in-product notices and the online Marketplace start off and can be turned back on in the System Console. Push notification text starts with the sender's name, without channel names or message text; routing metadata still reaches the push relay. What can still leave the server: admin-requested latest-version lookups against GitHub's API (successful results cached for 24 hours); the Calls plugin's default STUN server, `stun.global.calls.mattermost.com`, unless Configure Call Relay replaces it with Coturn; push notifications through whichever push server the owner enables; and link previews, which fetch the pages people link to. The scheduled health-dashboard check requires an Enterprise license and does not run in this Team Edition package.
+5. **Plugin uploads are off** until turned on in Configure Plugin Uploads.
+6. **Local mode is enabled**, which is what makes the recovery actions work without a login. It is reachable only through a socket inside the service.
+7. **Changing the site URL restarts the service**, and does not retroactively fix links already sent.
+8. **Calls comes prepackaged and enabled.** Call relaying's settings are written whether or not the plugin is enabled, and take effect once it is.
+9. **Call relaying is Coturn or nothing.** There is no field for an external TURN server — configure one in the System Console instead, and leave the toggle off.
 
 ---
 
@@ -251,7 +274,7 @@ volumes:
   main: host side (store.json)
 file_models:
   - store.json
-  - /mattermost/config/config.json # two Calls plugin keys only; the rest passes through
+  - /mattermost/config/config.json # two Calls plugin keys each start; privacy defaults once; the rest passes through
 startos_managed_env_vars:
   - MM_SQLSETTINGS_DRIVERNAME
   - MM_SQLSETTINGS_DATASOURCE
@@ -284,6 +307,7 @@ actions:
   - manage-smtp
   - manage-signup
   - manage-calls-turn
+  - manage-plugin-uploads
   - reset-user-password # only-running
   - promote-to-admin # only-running
   - demote-from-admin # only-running

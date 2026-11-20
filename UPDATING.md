@@ -33,3 +33,5 @@ In `startos/manifest/index.ts`, update the relevant `dockerTag`:
 
 - Mattermost: `mattermost/mattermost-team-edition:<new version>`
 - PostgreSQL: `postgres:<new major>-alpine`
+
+Then check the target version's config schema (`server/public/model/config.go` at the tag) for new settings that contact Mattermost's or third parties' servers by default, and update `privacyDefaults` in `startos/utils.ts` and README § Limitations and Differences to match. A new default reaches existing installs only through a migration.

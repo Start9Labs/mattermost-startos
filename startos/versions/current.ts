@@ -1,56 +1,40 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
+import { configJson } from '../fileModels/config.json'
+import { privacyDefaults } from '../utils'
 
 export const current = VersionInfo.of({
-  version: '12.1.0:0',
+  version: '12.1.0:1',
   releaseNotes: {
-    en_US: `Updated Mattermost to 12.1.0.
+    en_US: `Plugin uploads, and most of Mattermost's contact with Mattermost's own servers, are turned off.
 
-- New: an Out of Office notice above the message box when a direct-message recipient has automatic replies on
-- New: "Download all" in the media gallery saves every attachment as one zip file
-- New: file search can be turned off from the System Console
-- Improved: the rich text editor supports Markdown images and paste
-- Requires Firefox 153+, or Chrome or Edge 156+
+- Uploading plugins in the System Console is off. Plugins you already installed keep working; to upload a new plugin or a new version of one, turn on uploads in the Configure Plugin Uploads action.
+- Mattermost does not check Mattermost's servers for security alerts, show Mattermost's in-product notices, or list plugins from the online Marketplace. Each can be turned back on in the System Console.
+- Mobile push notifications show only the sender's name, not the channel or the message. Change this under System Console → Site Configuration → Notifications → Push Notification Contents.`,
+    es_ES: `Se desactivan la subida de complementos y la mayor parte del contacto de Mattermost con los servidores de Mattermost.
 
-[Full release notes](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
-    es_ES: `Mattermost actualizado a 12.1.0.
+- La subida de complementos en la Consola del sistema está desactivada. Los complementos que ya instalaste siguen funcionando; para subir un complemento nuevo o una nueva versión de uno, activa la subida en la acción Configurar la subida de complementos.
+- Mattermost no consulta los servidores de Mattermost en busca de alertas de seguridad, no muestra los avisos de Mattermost dentro del producto ni lista complementos del Marketplace en línea. Cada uno puede volver a activarse en la Consola del sistema.
+- Las notificaciones push móviles muestran solo el nombre del remitente, no el canal ni el mensaje. Cámbialo en Consola del sistema → Configuración del sitio → Notificaciones → Contenido de las notificaciones push.`,
+    de_DE: `Plugin-Uploads und der größte Teil des Kontakts von Mattermost zu den Servern von Mattermost werden ausgeschaltet.
 
-- Nuevo: un aviso de Fuera de la oficina sobre el cuadro de mensaje cuando el destinatario de un mensaje directo tiene activadas las respuestas automáticas
-- Nuevo: "Descargar todo" en la galería de medios guarda todos los adjuntos en un único archivo zip
-- Nuevo: la búsqueda de archivos se puede desactivar desde la Consola del sistema
-- Mejorado: el editor de texto enriquecido admite imágenes y pegado en Markdown
-- Requiere Firefox 153+, o Chrome o Edge 156+
+- Das Hochladen von Plugins in der Systemkonsole ist ausgeschaltet. Bereits installierte Plugins funktionieren weiter; um ein neues Plugin oder eine neue Version davon hochzuladen, schalten Sie Uploads in der Aktion „Plugin-Uploads konfigurieren“ ein.
+- Mattermost fragt die Server von Mattermost nicht nach Sicherheitswarnungen ab, zeigt keine produktinternen Hinweise von Mattermost an und listet keine Plugins aus dem Online-Marketplace. Jedes davon lässt sich in der Systemkonsole wieder einschalten.
+- Mobile Push-Benachrichtigungen zeigen nur den Namen des Absenders, nicht den Kanal oder die Nachricht. Ändern Sie dies unter Systemkonsole → Site-Konfiguration → Benachrichtigungen → Inhalt von Push-Benachrichtigungen.`,
+    pl_PL: `Przesyłanie wtyczek i większość kontaktu Mattermost z serwerami Mattermost zostają wyłączone.
 
-[Notas de la versión completas](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
-    de_DE: `Mattermost auf 12.1.0 aktualisiert.
+- Przesyłanie wtyczek w Konsoli systemowej jest wyłączone. Już zainstalowane wtyczki działają dalej; aby przesłać nową wtyczkę lub jej nową wersję, włącz przesyłanie w akcji Konfiguruj przesyłanie wtyczek.
+- Mattermost nie odpytuje serwerów Mattermost o alerty bezpieczeństwa, nie wyświetla komunikatów Mattermost w produkcie i nie pokazuje wtyczek z internetowego Marketplace. Każdą z tych funkcji można ponownie włączyć w Konsoli systemowej.
+- Mobilne powiadomienia push pokazują tylko nazwę nadawcy, bez kanału i treści wiadomości. Zmienisz to w Konsola systemowa → Konfiguracja witryny → Powiadomienia → Treść powiadomień push.`,
+    fr_FR: `Le téléversement de plugins et la plupart des échanges de Mattermost avec les serveurs de Mattermost sont désactivés.
 
-- Neu: ein Abwesenheitshinweis über dem Nachrichtenfeld, wenn der Empfänger einer Direktnachricht automatische Antworten aktiviert hat
-- Neu: „Alle herunterladen“ in der Mediengalerie speichert alle Anhänge als eine einzige ZIP-Datei
-- Neu: die Dateisuche lässt sich in der Systemkonsole abschalten
-- Verbessert: der Rich-Text-Editor unterstützt Markdown-Bilder und Einfügen von Markdown
-- Erfordert Firefox 153+ oder Chrome bzw. Edge 156+
-
-[Vollständige Versionshinweise](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
-    pl_PL: `Zaktualizowano Mattermost do 12.1.0.
-
-- Nowość: powiadomienie o nieobecności nad polem wiadomości, gdy odbiorca wiadomości bezpośredniej ma włączone automatyczne odpowiedzi
-- Nowość: „Pobierz wszystko” w galerii multimediów zapisuje wszystkie załączniki jako jeden plik zip
-- Nowość: wyszukiwanie plików można wyłączyć w Konsoli systemowej
-- Ulepszenie: edytor tekstu sformatowanego obsługuje obrazy i wklejanie w Markdown
-- Wymaga przeglądarki Firefox 153+ lub Chrome albo Edge 156+
-
-[Pełne informacje o wydaniu](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
-    fr_FR: `Mattermost mis à jour vers 12.1.0.
-
-- Nouveau : un avis d'absence au-dessus de la zone de saisie lorsque le destinataire d'un message direct a activé les réponses automatiques
-- Nouveau : « Tout télécharger » dans la galerie multimédia enregistre toutes les pièces jointes dans un seul fichier zip
-- Nouveau : la recherche de fichiers peut être désactivée depuis la Console système
-- Amélioré : l'éditeur de texte enrichi prend en charge les images et le collage Markdown
-- Nécessite Firefox 153+, ou Chrome ou Edge 156+
-
-[Notes de version complètes](https://docs.mattermost.com/product-overview/mattermost-v12-changelog.html)`,
+- Le téléversement de plugins dans la Console système est désactivé. Les plugins déjà installés continuent de fonctionner ; pour téléverser un nouveau plugin ou une nouvelle version d'un plugin, activez le téléversement dans l'action Configurer le téléversement de plugins.
+- Mattermost ne consulte pas les serveurs de Mattermost pour les alertes de sécurité, n'affiche pas les avis de Mattermost dans le produit et ne liste pas les plugins du Marketplace en ligne. Chacun peut être réactivé dans la Console système.
+- Les notifications push mobiles n'affichent que le nom de l'expéditeur, ni le canal ni le message. Modifiez cela dans Console système → Configuration du site → Notifications → Contenu des notifications push.`,
   },
   migrations: {
-    up: async ({ effects }) => {},
+    up: async ({ effects }) => {
+      await configJson.merge(effects, privacyDefaults)
+    },
     down: IMPOSSIBLE,
   },
 })
